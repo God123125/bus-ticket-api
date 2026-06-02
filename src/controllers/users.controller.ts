@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { IUser, userModel } from "../models/users";
 import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary";
 import bcrpyt from "bcrypt";
+import { responseServeError } from "../utils/log.util";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -9,8 +10,8 @@ export const userController = {
       res.json({
         list: users,
       });
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      responseServeError(res, e);
     }
   },
   getById: async (req: Request, res: Response) => {
@@ -18,8 +19,8 @@ export const userController = {
       const id = req.params.id;
       const users = await userModel.findById(id).select("-profilePublicId");
       res.json(users);
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      responseServeError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -38,8 +39,8 @@ export const userController = {
       };
       await userModel.create(user);
       res.status(201).json(user);
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      responseServeError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -65,8 +66,8 @@ export const userController = {
       user.username = req.body.username ?? user.username;
       await user.save();
       res.status(200).json(user);
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      responseServeError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -76,8 +77,8 @@ export const userController = {
       res.json({
         msg: "User deleted successfully",
       });
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      responseServeError(res, e);
     }
   },
 };

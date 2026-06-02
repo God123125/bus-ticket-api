@@ -1,3 +1,5 @@
+import { Response } from "express";
+
 export const logColors = {
   Reset: "\x1b[0m",
   FgBlack: "\x1b[30m",
@@ -30,4 +32,17 @@ const logData = (data: any[], logLevel: "log" | "error" = "log") => {
 };
 export const log = (...data: any) => {
   logData(data);
+};
+export const logError = (...data: any) => {
+  logData(data, "error");
+};
+export const responseServeError = (res: Response, err: Error) => {
+  logError(err);
+  let msg;
+  if (process.env.NODE_ENV === "production") {
+    msg = "Internal Server Error";
+  } else {
+    msg = err.stack || err;
+  }
+  res.status(500).send(msg);
 };
