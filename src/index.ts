@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import appRouter from "./routes/routers";
 import * as model from "./models";
+import { log } from "console";
+import { logColors } from "./utils/log.util";
 const app = express();
 const PORT = 3000;
 app.use(cors());
@@ -12,6 +14,17 @@ app.get("/", (req: Request, res: Response) => {
     version: 1,
   });
 });
+if (process.env.NODE_ENV !== "production") {
+  app.use((req, res, next) => {
+    const url = req.url;
+    res.on("finish", () => {
+      log(
+        `${res.statusCode > 399 ? logColors.FgRed : logColors.FgGreen}${res.statusCode}${logColors.Reset} ${req.method.padEnd(8)}: ${url}`,
+      ); // \t${req.get('user-agent')}
+    });
+    next();
+  });
+}
 app.use("/api", appRouter);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

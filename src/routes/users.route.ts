@@ -5,4 +5,6 @@ const routers = Router();
 routers.get("/", userController.getMany);
 routers.post("/", upload.single("profile"), userController.create);
 routers.patch("/:id", upload.single("profile"), userController.update);
+routers.delete("/:id", userController.delete);
+routers.get("/:id", userController.getById);
 export const userRoute = routers;

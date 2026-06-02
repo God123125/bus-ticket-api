@@ -5,7 +5,18 @@ import bcrpyt from "bcrypt";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
     try {
-      const users = await userModel.find();
+      const users = await userModel.find().select("-profilePublicId");
+      res.json({
+        list: users,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  },
+  getById: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const users = await userModel.findById(id).select("-profilePublicId");
       res.json(users);
     } catch (e) {
       console.log(e);
@@ -54,6 +65,17 @@ export const userController = {
       user.username = req.body.username ?? user.username;
       await user.save();
       res.status(200).json(user);
+    } catch (e) {
+      console.log(e);
+    }
+  },
+  delete: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      await userModel.findByIdAndDelete(id);
+      res.json({
+        msg: "User deleted successfully",
+      });
     } catch (e) {
       console.log(e);
     }
