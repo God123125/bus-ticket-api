@@ -1,5 +1,6 @@
 import { model, Schema } from "mongoose";
-export interface IBus {
+import { IMongoObject } from "../interfaces/mongo-object";
+export interface IBus extends IMongoObject {
   bus_name: string;
   plate_number: string;
   description: string;

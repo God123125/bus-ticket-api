@@ -1,5 +1,6 @@
 import { model, Schema, Types } from "mongoose";
-export interface IUser {
+import { IMongoObject } from "../interfaces/mongo-object";
+export interface IUser extends IMongoObject {
   username: string;
   password: string;
   addresss: string;

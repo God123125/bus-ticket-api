@@ -12,6 +12,16 @@ export const busController = {
       responseServeError(res, e);
     }
   },
+  getById: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const bus = await busModel.findById(id);
+      if (!bus) return res.json({ msg: "Bus not found!" });
+      res.json(bus);
+    } catch (e: any) {
+      responseServeError(res, e);
+    }
+  },
   create: async (req: Request, res: Response) => {
     try {
       const body: IBus = req.body;
