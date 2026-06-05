@@ -7,6 +7,7 @@ export interface IUser extends IMongoObject {
   tel: string;
   profile: string;
   profilePublicId: string;
+  role: string;
 }
 const schema = new Schema<IUser>(
   {
@@ -16,6 +17,7 @@ const schema = new Schema<IUser>(
     tel: { type: Schema.Types.String, required: false },
     profile: { type: Schema.Types.String, required: false },
     profilePublicId: { type: Schema.Types.String, required: false },
+    role: { type: Schema.Types.String, required: true },
   },
   { timestamps: true },
 );
