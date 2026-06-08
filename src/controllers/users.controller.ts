@@ -3,6 +3,7 @@ import { IUser, userModel } from "../models/users";
 import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary";
 import bcrpyt from "bcrypt";
 import { responseServeError } from "../utils/log.util";
+import { getToken, getExpirationDate } from "../auth/auth.service";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -76,6 +77,33 @@ export const userController = {
       await userModel.findByIdAndDelete(id);
       res.json({
         msg: "User deleted successfully",
+      });
+    } catch (e: any) {
+      responseServeError(res, e);
+    }
+  },
+  login: async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      const user = await userModel.findOne({ username: username });
+      if (!user) return res.status(400).json({ msg: "User not found" });
+      const compare = await bcrpyt.compare(password, user.password);
+      if (!compare) return res.status(400).json({ msg: "Wrong password" });
+      const data = {
+        user: user._id,
+        company: user.company,
+      };
+      const token = getToken(data as any);
+      const expireAt = getExpirationDate(token);
+      const userResponse = {
+        username: user.username,
+        role: user.role,
+      };
+      res.json({
+        user: userResponse,
+        token,
+        expireAt,
+        msg: "Login success",
       });
     } catch (e: any) {
       responseServeError(res, e);
