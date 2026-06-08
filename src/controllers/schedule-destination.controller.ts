@@ -4,7 +4,9 @@ import { responseServeError } from "../utils/log.util";
 export const scheduleController = {
   getMany: async (req: Request, res: Response) => {
     try {
-      const schedules = await scheduleModel.find();
+      const schedules = await scheduleModel.find({
+        company: req.get("company") as string,
+      });
       res.json({
         list: schedules,
       });
@@ -14,7 +16,7 @@ export const scheduleController = {
   },
   create: async (req: Request, res: Response) => {
     try {
-      const body: ISchedule = req.body;
+      const body: ISchedule = { ...req.body, company: req.get("company") };
       const data = await scheduleModel.create(body);
       res.json({
         msg: "Schedule created successfully!",

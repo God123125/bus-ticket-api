@@ -4,7 +4,9 @@ import { responseServeError } from "../utils/log.util";
 export const busController = {
   getMany: async (req: Request, res: Response) => {
     try {
-      const buses = await busModel.find();
+      const buses = await busModel.find({
+        company: req.get("company") as string,
+      });
       res.json({
         list: buses,
       });
@@ -24,7 +26,7 @@ export const busController = {
   },
   create: async (req: Request, res: Response) => {
     try {
-      const body: IBus = req.body;
+      const body: IBus = { ...req.body, company: req.get("company") };
       const createdData = busModel.create(body);
       res.status(200).json({
         msg: "Bus created successfully!",

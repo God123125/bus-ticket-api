@@ -13,6 +13,7 @@ const schema = new Schema<IBus>(
     plate_number: { type: Schema.Types.String, required: true },
     description: { type: Schema.Types.String, required: false },
     type: { type: Schema.Types.String, required: false },
+    company: { type: Schema.Types.ObjectId, required: true },
   },
   { timestamps: true },
 );

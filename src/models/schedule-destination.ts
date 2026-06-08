@@ -1,5 +1,6 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { stationModel } from "./station";
+import { companyModel } from "./company";
 export interface ISchedule {
   from: string;
   to: string;
@@ -22,6 +23,11 @@ const schema = new Schema<ISchedule>({
   arrival_station: {
     type: Schema.Types.ObjectId,
     ref: stationModel.collection.collectionName,
+    required: true,
+  },
+  company: {
+    type: Schema.Types.ObjectId,
+    ref: companyModel.collection.collectionName,
     required: true,
   },
 });
