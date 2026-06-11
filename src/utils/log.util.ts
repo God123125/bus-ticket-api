@@ -36,7 +36,7 @@ export const log = (...data: any) => {
 export const logError = (...data: any) => {
   logData(data, "error");
 };
-export const responseServeError = (res: Response, err: Error) => {
+export const responseServerError = (res: Response, err: Error) => {
   logError(err);
   let msg;
   if (process.env.NODE_ENV === "production") {

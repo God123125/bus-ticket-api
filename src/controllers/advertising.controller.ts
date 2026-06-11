@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { advertisingModel, IAdvertising } from "../models/advertising";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 export const advertisingController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -11,7 +11,7 @@ export const advertisingController = {
         list: ads,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -23,7 +23,7 @@ export const advertisingController = {
         data: data,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ export const advertisingController = {
         msg: "Advertising updated successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -46,7 +46,7 @@ export const advertisingController = {
         msg: "Advertising deleted successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
 };

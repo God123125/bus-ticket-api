@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { companyModel, ICompany } from "../models/company";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 export const companyController = {
   getMany: async (req: Request, res: Response) => {
     try {
       const companies = await companyModel.find();
       res.json({ list: companies });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -16,7 +16,7 @@ export const companyController = {
       const data = await companyModel.create(body);
       res.json({ msg: "Company created successfully!", data: data });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ export const companyController = {
       await companyModel.findByIdAndUpdate(id, body);
       res.json({ msg: "Company updated successfully!" });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ export const companyController = {
       await companyModel.findByIdAndDelete(id);
       res.json({ msg: "Company deleted successfully!" });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
 };

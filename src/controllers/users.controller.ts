@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { IUser, userModel } from "../models/users";
 import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary";
 import bcrpyt from "bcrypt";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 import { getToken, getExpirationDate } from "../auth/auth.service";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
@@ -12,7 +12,7 @@ export const userController = {
         list: users,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   getById: async (req: Request, res: Response) => {
@@ -21,7 +21,7 @@ export const userController = {
       const users = await userModel.findById(id).select("-profilePublicId");
       res.json(users);
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -47,7 +47,7 @@ export const userController = {
       await userModel.create(user);
       res.status(201).json(user);
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -74,7 +74,7 @@ export const userController = {
       await user.save();
       res.status(200).json(user);
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -85,7 +85,7 @@ export const userController = {
         msg: "User deleted successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   login: async (req: Request, res: Response) => {
@@ -112,7 +112,7 @@ export const userController = {
         msg: "Login success",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
 };

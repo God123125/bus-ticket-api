@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ISeat, seatModel } from "../models/seat";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 export const seatController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -9,7 +9,7 @@ export const seatController = {
         list: seats,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -20,7 +20,7 @@ export const seatController = {
       const newSeat = await seatModel.create(body);
       res.json({ msg: "Seat created successfully", data: newSeat });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -32,7 +32,7 @@ export const seatController = {
         msg: "Seat updated successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -43,7 +43,7 @@ export const seatController = {
         msg: "Seat delete successfully!",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
 };

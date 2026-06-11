@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { busModel, IBus } from "../models/bus";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 export const busController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -11,7 +11,7 @@ export const busController = {
         list: buses,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   getById: async (req: Request, res: Response) => {
@@ -21,7 +21,7 @@ export const busController = {
       if (!bus) return res.json({ msg: "Bus not found!" });
       res.json(bus);
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   create: async (req: Request, res: Response) => {
@@ -33,7 +33,7 @@ export const busController = {
         data: createdData,
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   update: async (req: Request, res: Response) => {
@@ -47,7 +47,7 @@ export const busController = {
         msg: "Bus updated successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
   delete: async (req: Request, res: Response) => {
@@ -58,7 +58,7 @@ export const busController = {
         msg: "Bus deleted successfully",
       });
     } catch (e: any) {
-      responseServeError(res, e);
+      responseServerError(res, e);
     }
   },
 };
