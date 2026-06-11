@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
-import { responseServeError } from "../utils/log.util";
+import { responseServerError } from "../utils/log.util";
 export const verifyToken = async (
   req: Request,
   res: Response,
@@ -23,6 +23,6 @@ export const verifyToken = async (
     req.company = decoded.company || "";
     next();
   } catch (e: any) {
-    responseServeError(res, e);
+    responseServerError(res, e);
   }
 };
