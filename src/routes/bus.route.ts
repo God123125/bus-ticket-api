@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { busController } from "../controllers/buses.controller";
+import { verifyToken } from "../auth/verify-token.service";
 const routes = Router();
-routes.get("/", busController.getMany);
+routes.get("/", verifyToken, busController.getMany);
 routes.post("/", busController.create);
 routes.patch("/:id", busController.update);
 routes.delete("/:id", busController.delete);
