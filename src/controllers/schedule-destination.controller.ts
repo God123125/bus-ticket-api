@@ -5,7 +5,7 @@ export const scheduleController = {
   getMany: async (req: Request, res: Response) => {
     try {
       const schedules = await scheduleModel.find({
-        company: req.get("company") as string,
+        company: req.company as string,
       });
       res.json({
         list: schedules,
@@ -16,7 +16,7 @@ export const scheduleController = {
   },
   create: async (req: Request, res: Response) => {
     try {
-      const body: ISchedule = { ...req.body, company: req.get("company") };
+      const body: ISchedule = { ...req.body, company: req.company };
       const data = await scheduleModel.create(body);
       res.json({
         msg: "Schedule created successfully!",

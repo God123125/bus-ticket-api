@@ -32,12 +32,18 @@ export const userController = {
       );
       const salt = await bcrpyt.genSalt();
       const hash = await bcrpyt.hash(req.body.password, salt);
-      const user = {
+      const user: IUser = {
         username: req.body.username,
         password: hash,
         profile: url,
         profilePublicId: publicId,
+        role: req.body.role,
       };
+      if (req.body.company) {
+        user.company = req.body.company;
+        user.tel = req.body.tel || "";
+        user.addresss = req.body.address || "";
+      }
       await userModel.create(user);
       res.status(201).json(user);
     } catch (e: any) {

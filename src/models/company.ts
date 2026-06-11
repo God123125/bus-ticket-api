@@ -8,6 +8,7 @@ export interface ICompany extends IMongoObject {
   image: string;
   imagePublicId: string;
   owner: string | ObjectId;
+  commission_fee: number;
 }
 const schema = new Schema<ICompany>(
   {
@@ -16,6 +17,7 @@ const schema = new Schema<ICompany>(
     is_active: { type: Schema.Types.Boolean, default: true, required: false },
     image: { type: Schema.Types.String, required: false },
     imagePublicId: { type: Schema.Types.String, required: false },
+    commission_fee: { type: Schema.Types.Number, default: 0, required: true },
     owner: {
       type: Schema.Types.ObjectId,
       ref: userModel.collection.collectionName,
