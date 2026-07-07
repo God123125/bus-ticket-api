@@ -5,8 +5,8 @@ export interface IBooking extends IMongoObject {
   user: string | ObjectId;
   total_price: number;
   booked_seats: string[];
-  bus_type: string;
   trip: string | ObjectId;
+  status?: string;
 }
 const schema = new Schema<IBooking>(
   {
@@ -16,8 +16,8 @@ const schema = new Schema<IBooking>(
       required: true,
     },
     total_price: { type: Schema.Types.Number, required: true },
+    status: { type: Schema.Types.String, required: false, default: "pending" },
     booked_seats: [{ type: Schema.Types.String, required: false }],
-    bus_type: { type: Schema.Types.String, required: true },
     trip: { type: Schema.Types.ObjectId, required: true },
   },
   { timestamps: true },

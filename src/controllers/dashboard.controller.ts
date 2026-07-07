@@ -4,7 +4,7 @@ import { busModel } from "../models/bus";
 import { responseServerError } from "../utils/log.util";
 
 export const merchantDashboardController = {
-  get_overall: async (req: Request, res: Response) => {
+  get_merchant_dashboard: async (req: Request, res: Response) => {
     try {
       const company = req.company;
       const total_trips = await tripModel.countDocuments({ company: company });
