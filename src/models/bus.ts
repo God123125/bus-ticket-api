@@ -6,6 +6,7 @@ export interface IBus extends IMongoObject {
   description: string;
   type: string;
   company: string | ObjectId;
+  row: number;
 }
 const schema = new Schema<IBus>(
   {
@@ -14,6 +15,7 @@ const schema = new Schema<IBus>(
     description: { type: Schema.Types.String, required: false },
     type: { type: Schema.Types.String, required: false },
     company: { type: Schema.Types.ObjectId, required: true },
+    row: { type: Schema.Types.Number, required: true },
   },
   { timestamps: true },
 );
