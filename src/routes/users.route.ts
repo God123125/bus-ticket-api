@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { upload } from "../config/cloudinary";
 import { userController } from "../controllers/users.controller";
 const routers = Router();
