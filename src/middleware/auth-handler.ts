@@ -4,6 +4,7 @@ import { responseServerError } from "../utils/log.util";
 import jwt from "jsonwebtoken";
 import { userModel } from "../models/users";
 import { HttpResponseCode } from "../interfaces/http-response-enum";
+import "dotenv/config";
 export default class AuthHandlers {
   public static requiredAuth(req: Request, res: Response, next: NextFunction) {
     req.requiredAuth = true;
@@ -53,19 +54,20 @@ export default class AuthHandlers {
     req.requiredCompany = true;
     return next();
   }
-  public static roleHandler(role: string) {
+  public static roleHandler(roles: string[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
-      const user = await userModel.findById(req.body).select("role").lean();
+      const user = await userModel.findById(req.user).select("role").lean();
       if (!user) {
         return res.status(HttpResponseCode.client_error).json({
           msg: "User not found",
         });
       }
-      if (user.role !== role) {
+      if (!roles.includes(user.role)) {
         return res.status(HttpResponseCode.forbidden).json({
           msg: "Forbidden",
         });
       }
+      return next();
     };
   }
 }

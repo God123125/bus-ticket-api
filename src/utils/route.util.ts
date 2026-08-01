@@ -9,8 +9,15 @@ export const parseToExpressRoute = (
     router = Router();
   }
   for (const route of routes) {
-    const { path, method, role, authentication, required_company, handler } =
-      route;
+    const {
+      path,
+      method,
+      roles,
+      authentication,
+      required_company,
+      middleware: customMiddleware,
+      handler,
+    } = route;
     let middleware: Handler[] = [];
     if (authentication) {
       middleware.push(AuthHandlers.requiredAuth);
@@ -24,8 +31,16 @@ export const parseToExpressRoute = (
 
     middleware.push(AuthHandlers.authentication);
 
-    if (role) {
-      middleware.push(AuthHandlers.roleHandler(role));
+    if (roles) {
+      middleware.push(AuthHandlers.roleHandler(roles));
+    }
+
+    if (customMiddleware) {
+      if (Array.isArray(customMiddleware)) {
+        middleware.push(...customMiddleware);
+      } else {
+        middleware.push(customMiddleware);
+      }
     }
 
     middleware.push(handler);

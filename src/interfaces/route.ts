@@ -4,8 +4,9 @@ import { RoleEnum } from "./role-enum";
 export interface IRoute {
   path: string;
   method: "get" | "post" | "patch" | "delete";
-  role?: RoleEnum;
+  roles?: RoleEnum[];
   authentication?: boolean;
   required_company?: boolean;
+  middleware?: Handler | Handler[];
   handler: Handler;
 }

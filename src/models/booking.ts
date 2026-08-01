@@ -1,6 +1,7 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { clientUserModel } from "./client-user";
 import { IMongoObject } from "../interfaces/mongo-object";
+import { tripModel } from "./trip";
 export interface IBooking extends IMongoObject {
   user: string | ObjectId;
   total_price: number;
@@ -18,7 +19,11 @@ const schema = new Schema<IBooking>(
     total_price: { type: Schema.Types.Number, required: true },
     status: { type: Schema.Types.String, required: false, default: "pending" },
     booked_seats: [{ type: Schema.Types.String, required: false }],
-    trip: { type: Schema.Types.ObjectId, required: true },
+    trip: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: tripModel.collection.collectionName,
+    },
   },
   { timestamps: true },
 );

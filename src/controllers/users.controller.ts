@@ -1,15 +1,35 @@
 import { Request, Response } from "express";
 import { IUser, userModel } from "../models/users";
 import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary";
-import bcrpyt from "bcrypt";
+import * as bcrypt from "bcrypt";
 import { responseServerError } from "../utils/log.util";
 import { getToken, getExpirationDate } from "../auth/auth.service";
+import { companyModel } from "../models/company";
+import { RoleEnum } from "../interfaces/role-enum";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
     try {
-      const users = await userModel.find().select("-profilePublicId");
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+      const search = (req.query.search as string) || "";
+      const skip = (page - 1) * limit;
+      const users = await userModel
+        .find({
+          role: { $ne: RoleEnum.admin },
+          $or: [
+            { username: { $regex: search, $options: "i" } },
+            { full_name: { $regex: search, $options: "i" } },
+          ],
+        })
+        .limit(limit)
+        .skip(skip)
+        .sort({ createdAt: -1 })
+        .select(["-profilePublicId", "-password"]);
       res.json({
         list: users,
+        total: await userModel.countDocuments({
+          role: { $ne: RoleEnum.admin },
+        }),
       });
     } catch (e: any) {
       responseServerError(res, e);
@@ -18,7 +38,9 @@ export const userController = {
   getById: async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
-      const users = await userModel.findById(id).select("-profilePublicId");
+      const users = await userModel
+        .findById(id)
+        .select(["-profilePublicId", "-password"]);
       res.json(users);
     } catch (e: any) {
       responseServerError(res, e);
@@ -26,24 +48,27 @@ export const userController = {
   },
   create: async (req: Request, res: Response) => {
     try {
-      const { url, publicId } = await uploadToCloudinary(
-        req.file!.buffer,
-        "profiles",
-      );
-      const salt = await bcrpyt.genSalt();
-      const hash = await bcrpyt.hash(req.body.password, salt);
+      let url = "";
+      let publicId = "";
+      if (req.file) {
+        const cloudRes = await uploadToCloudinary(req.file!.buffer, "profiles");
+        url = cloudRes.url;
+        publicId = cloudRes.publicId;
+      }
+      const salt = await bcrypt.genSalt();
+      const hash = await bcrypt.hash(req.body.password, salt);
       const user: IUser = {
+        full_name: req.body.full_name ?? "",
         username: req.body.username,
         password: hash,
-        profile: url,
-        profilePublicId: publicId,
-        role: req.body.role,
+        profile: url ?? "",
+        profilePublicId: publicId ?? "",
+        role: req.body.role ?? RoleEnum.merchant,
+        tel: req.body.tel ?? "",
+        address: req.body.address ?? "",
+        bank_acc_number: req.body.bank_acc_number ?? "",
+        bank_acc_name: req.body.bank_acc_name ?? "",
       };
-      if (req.body.company) {
-        user.company = req.body.company;
-        user.tel = req.body.tel || "";
-        user.addresss = req.body.address || "";
-      }
       await userModel.create(user);
       res.status(201).json(user);
     } catch (e: any) {
@@ -67,10 +92,15 @@ export const userController = {
         user.profilePublicId = publicId;
       }
       if (req.body.password) {
-        const salt = await bcrpyt.genSalt();
-        user.password = await bcrpyt.hash(req.body.password, salt);
+        const salt = await bcrypt.genSalt();
+        user.password = await bcrypt.hash(req.body.password, salt);
       }
       user.username = req.body.username ?? user.username;
+      user.full_name = req.body.full_name;
+      user.tel = req.body.tel;
+      user.address = req.body.address;
+      user.bank_acc_number = req.body.bank_acc_number;
+      user.bank_acc_name = req.body.bank_acc_name;
       await user.save();
       res.status(200).json(user);
     } catch (e: any) {
@@ -80,6 +110,11 @@ export const userController = {
   delete: async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
+      const user = await userModel.findById(id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.profilePublicId) {
+        await deleteFromCloudinary(user.profilePublicId);
+      }
       await userModel.findByIdAndDelete(id);
       res.json({
         msg: "User deleted successfully",
@@ -93,11 +128,12 @@ export const userController = {
       const { username, password } = req.body;
       const user = await userModel.findOne({ username: username });
       if (!user) return res.status(400).json({ msg: "User not found" });
-      const compare = await bcrpyt.compare(password, user.password);
+      const compare = await bcrypt.compare(password, user.password);
       if (!compare) return res.status(400).json({ msg: "Wrong password" });
+      const companyId = await companyModel.findOne({ owner: user._id });
       const data = {
         user: user._id,
-        company: user.company,
+        company: companyId,
       };
       const token = getToken(data as any);
       const expireAt = getExpirationDate(token);

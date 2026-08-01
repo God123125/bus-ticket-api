@@ -1,6 +1,4 @@
-import { Request, Response } from "express";
 import { advertisingModel, IAdvertising } from "../models/advertising";
-import { responseServerError } from "../utils/log.util";
 import { Controller } from "./controller";
 export default class AdvertisingController extends Controller<IAdvertising> {
   private static instance: AdvertisingController;

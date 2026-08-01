@@ -24,7 +24,7 @@ export class Controller<T extends IMongoObject> {
   public getMany(
     option: {
       query?: QueryFilter<T>;
-      sort?: Record<keyof T & string, SortOrder>;
+      sort?: Record<keyof T | string, SortOrder>;
       pagination?: IPaginationForm;
       select?: ProjectionType<T>;
     },

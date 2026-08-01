@@ -1,64 +1,77 @@
 import { Request, Response } from "express";
 import { busModel, IBus } from "../models/bus";
 import { responseServerError } from "../utils/log.util";
-export const busController = {
-  getMany: async (req: Request, res: Response) => {
-    try {
-      const buses = await busModel.find({
-        company: req.company!,
-      });
-      res.json({
-        list: buses,
-      });
-    } catch (e: any) {
-      responseServerError(res, e);
+import { Controller } from "./controller";
+export default class BusController extends Controller<IBus> {
+  private static instance: BusController;
+  private constructor() {
+    super(busModel);
+  }
+  public static getInstance(): BusController {
+    if (!BusController.instance) {
+      BusController.instance = new BusController();
     }
-  },
-  getById: async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id;
-      const bus = await busModel.findById(id);
-      if (!bus) return res.json({ msg: "Bus not found!" });
-      res.json(bus);
-    } catch (e: any) {
-      responseServerError(res, e);
-    }
-  },
-  create: async (req: Request, res: Response) => {
-    try {
-      const body: IBus = { ...req.body, company: req.company };
-      const createdData = await busModel.create(body);
-      res.status(200).json({
-        msg: "Bus created successfully!",
-        data: createdData,
-      });
-    } catch (e: any) {
-      responseServerError(res, e);
-    }
-  },
-  update: async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id;
-      const body: Partial<IBus> = req.body;
-      const bus = await busModel.findById(id);
-      if (!bus) return res.status(400).json({ msg: "Bus not found" });
-      await bus.updateOne(body);
-      res.json({
-        msg: "Bus updated successfully",
-      });
-    } catch (e: any) {
-      responseServerError(res, e);
-    }
-  },
-  delete: async (req: Request, res: Response) => {
-    try {
-      const id = req.params.id;
-      await busModel.findByIdAndDelete(id);
-      res.json({
-        msg: "Bus deleted successfully",
-      });
-    } catch (e: any) {
-      responseServerError(res, e);
-    }
-  },
-};
+    return BusController.instance;
+  }
+}
+// export const busController = {
+//   getMany: async (req: Request, res: Response) => {
+//     try {
+//       const buses = await busModel.find({
+//         company: req.company!,
+//       });
+//       res.json({
+//         list: buses,
+//       });
+//     } catch (e: any) {
+//       responseServerError(res, e);
+//     }
+//   },
+//   getById: async (req: Request, res: Response) => {
+//     try {
+//       const id = req.params.id;
+//       const bus = await busModel.findById(id);
+//       if (!bus) return res.json({ msg: "Bus not found!" });
+//       res.json(bus);
+//     } catch (e: any) {
+//       responseServerError(res, e);
+//     }
+//   },
+//   create: async (req: Request, res: Response) => {
+//     try {
+//       const body: IBus = { ...req.body, company: req.company };
+//       const createdData = await busModel.create(body);
+//       res.status(200).json({
+//         msg: "Bus created successfully!",
+//         data: createdData,
+//       });
+//     } catch (e: any) {
+//       responseServerError(res, e);
+//     }
+//   },
+//   update: async (req: Request, res: Response) => {
+//     try {
+//       const id = req.params.id;
+//       const body: Partial<IBus> = req.body;
+//       const bus = await busModel.findById(id);
+//       if (!bus) return res.status(400).json({ msg: "Bus not found" });
+//       await bus.updateOne(body);
+//       res.json({
+//         msg: "Bus updated successfully",
+//       });
+//     } catch (e: any) {
+//       responseServerError(res, e);
+//     }
+//   },
+//   delete: async (req: Request, res: Response) => {
+//     try {
+//       const id = req.params.id;
+//       await busModel.findByIdAndDelete(id);
+//       res.json({
+//         msg: "Bus deleted successfully",
+//       });
+//     } catch (e: any) {
+//       responseServerError(res, e);
+//     }
+//   },
+// };
