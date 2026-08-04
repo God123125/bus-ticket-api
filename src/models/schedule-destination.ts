@@ -1,7 +1,8 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { stationModel } from "./station";
 import { companyModel } from "./company";
-export interface ISchedule {
+import { IMongoObject } from "../interfaces/mongo-object";
+export interface ISchedule extends IMongoObject {
   from: string;
   to: string;
   departure_time: string;
@@ -9,6 +10,7 @@ export interface ISchedule {
   departure_station: string | ObjectId;
   arrival_station: string | ObjectId;
   company: string | ObjectId;
+  description: string;
 }
 const schema = new Schema<ISchedule>({
   from: { type: Schema.Types.String, required: true },
@@ -29,6 +31,10 @@ const schema = new Schema<ISchedule>({
     type: Schema.Types.ObjectId,
     ref: companyModel.collection.collectionName,
     required: true,
+  },
+  description: {
+    type: Schema.Types.String,
+    required: false,
   },
 });
 export const scheduleModel = model("schedule_destinations", schema);

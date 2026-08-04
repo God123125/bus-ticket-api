@@ -4,7 +4,6 @@ import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary";
 import * as bcrypt from "bcrypt";
 import { responseServerError } from "../utils/log.util";
 import { getToken, getExpirationDate } from "../auth/auth.service";
-import { companyModel } from "../models/company";
 import { RoleEnum } from "../interfaces/role-enum";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
@@ -15,7 +14,7 @@ export const userController = {
       const skip = (page - 1) * limit;
       const users = await userModel
         .find({
-          role: { $ne: RoleEnum.admin },
+          role: { $ne: RoleEnum.Admin },
           $or: [
             { username: { $regex: search, $options: "i" } },
             { full_name: { $regex: search, $options: "i" } },
@@ -28,7 +27,7 @@ export const userController = {
       res.json({
         list: users,
         total: await userModel.countDocuments({
-          role: { $ne: RoleEnum.admin },
+          role: { $ne: RoleEnum.Admin },
         }),
       });
     } catch (e: any) {
@@ -63,7 +62,7 @@ export const userController = {
         password: hash,
         profile: url ?? "",
         profilePublicId: publicId ?? "",
-        role: req.body.role ?? RoleEnum.merchant,
+        role: req.body.role ?? RoleEnum.Merchant,
         tel: req.body.tel ?? "",
         address: req.body.address ?? "",
         bank_acc_number: req.body.bank_acc_number ?? "",
@@ -101,6 +100,7 @@ export const userController = {
       user.address = req.body.address;
       user.bank_acc_number = req.body.bank_acc_number;
       user.bank_acc_name = req.body.bank_acc_name;
+      user.company = req.body.company;
       await user.save();
       res.status(200).json(user);
     } catch (e: any) {
@@ -130,10 +130,9 @@ export const userController = {
       if (!user) return res.status(400).json({ msg: "User not found" });
       const compare = await bcrypt.compare(password, user.password);
       if (!compare) return res.status(400).json({ msg: "Wrong password" });
-      const companyId = await companyModel.findOne({ owner: user._id });
       const data = {
         user: user._id,
-        company: companyId,
+        company: user.company,
       };
       const token = getToken(data as any);
       const expireAt = getExpirationDate(token);

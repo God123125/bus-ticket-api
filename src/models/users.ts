@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { model, ObjectId, Schema } from "mongoose";
 import { IMongoObject } from "../interfaces/mongo-object";
 export interface IUser extends IMongoObject {
   full_name: string;
@@ -11,8 +11,9 @@ export interface IUser extends IMongoObject {
   role: string;
   bank_acc_number: string;
   bank_acc_name: string;
+  company?: string | ObjectId;
 }
-const schema = new Schema<IUser>(
+const schema: Schema<IUser> = new Schema<IUser>(
   {
     full_name: { type: Schema.Types.String, required: true },
     username: { type: Schema.Types.String, required: true },
@@ -24,6 +25,11 @@ const schema = new Schema<IUser>(
     role: { type: Schema.Types.String, required: true },
     bank_acc_number: { type: Schema.Types.String, required: false },
     bank_acc_name: { type: Schema.Types.String, required: false },
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "companies",
+      required: false,
+    },
   },
   { timestamps: true },
 );

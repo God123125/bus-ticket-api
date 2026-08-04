@@ -1,6 +1,5 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { IMongoObject } from "../interfaces/mongo-object";
-import { userModel } from "./users";
 export interface ICompany extends IMongoObject {
   name: string;
   rating: number;
@@ -9,8 +8,9 @@ export interface ICompany extends IMongoObject {
   imagePublicId: string;
   owner: string | ObjectId;
   commission_fee: number;
+  color: string;
 }
-const schema = new Schema<ICompany>(
+const schema: Schema<ICompany> = new Schema<ICompany>(
   {
     name: { type: Schema.Types.String, required: true },
     rating: { type: Schema.Types.Number, default: 0, required: false },
@@ -18,9 +18,10 @@ const schema = new Schema<ICompany>(
     image: { type: Schema.Types.String, required: false },
     imagePublicId: { type: Schema.Types.String, required: false },
     commission_fee: { type: Schema.Types.Number, default: 0, required: true },
+    color: { type: Schema.Types.String, required: false },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: userModel.collection.collectionName,
+      ref: "users",
       required: true,
     },
   },

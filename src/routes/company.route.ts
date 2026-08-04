@@ -10,24 +10,30 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary";
+import { IPaginationForm } from "../interfaces/pagination";
 
 const routes: IRoute[] = [
   {
     path: "/",
     method: "get",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
-        const search = req.query.search as string;
+        const search = req.query.search;
+        const pagination: IPaginationForm = req.query;
+        let query: any = {};
+        if (search) {
+          query.name = { $regex: search, $options: "i" };
+        }
         const list = await CompanyController.getInstance()
           .getMany({
-            query: { name: { $regex: search, $options: "i" } },
-            pagination: req.query,
+            query,
+            pagination,
             sort: { createdAt: -1 },
             select: ["-imagePublicId"],
           })
-          .populate([{ path: "owner" }]);
-        const total = await CompanyController.getInstance().count();
+          .populate([{ path: "owner", select: ["-password", "-__v"] }]);
+        const total = await CompanyController.getInstance().count(query);
         res.json({ list, total });
       } catch (e: any) {
         responseServerError(res, e);
@@ -37,7 +43,7 @@ const routes: IRoute[] = [
   {
     path: "/",
     method: "post",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     middleware: upload.single("image"),
     handler: async (req: Request, res: Response) => {
       try {
@@ -69,7 +75,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "get",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -83,7 +89,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "patch",
-    roles: [RoleEnum.admin, RoleEnum.merchant],
+    roles: [RoleEnum.Admin, RoleEnum.Merchant],
     middleware: upload.single("image"),
     handler: async (req: Request, res: Response) => {
       try {
@@ -118,7 +124,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "delete",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;

@@ -1,6 +1,7 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { userModel } from "./users";
-export interface IStation {
+import { IMongoObject } from "../interfaces/mongo-object";
+export interface IStation extends IMongoObject {
   station_name: string;
   latitude: number;
   longitude: number;

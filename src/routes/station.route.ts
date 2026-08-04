@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
-import { RoleEnum } from "../interfaces/role-enum";
 import { IRoute } from "../interfaces/route";
 import { parseToExpressRoute } from "../utils/route.util";
 import { responseServerError } from "../utils/log.util";
-import ScheduleController from "../controllers/schedule-destination.controller";
+import StationController from "../controllers/station.controller";
+import { RoleEnum } from "../interfaces/role-enum";
 import { IPaginationForm } from "../interfaces/pagination";
-import { ISchedule } from "../models/schedule-destination";
+import { IStation } from "../models/station";
+
 const routes: IRoute[] = [
   {
     path: "/",
@@ -14,9 +15,9 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const body = { ...req.body, company: req.company };
-        const data = await ScheduleController.getInstance().create(body);
+        const data = await StationController.getInstance().create(body);
         res.json({
-          msg: "Schedule created successfully",
+          msg: "Station created successfully",
           data: data,
         });
       } catch (e: any) {
@@ -37,21 +38,13 @@ const routes: IRoute[] = [
         const search = req.query.search;
         let query: any = { company: req.company };
         if (search) {
-          query.$or = [
-            { from: { $regex: search, $options: "i" } },
-            { to: { $regex: search, $options: "i" } },
-          ];
+          query.station_name = { $regex: search, $options: "i" };
         }
-        const data = await ScheduleController.getInstance().getMany({
-          pagination,
-          query,
-          sort: { createdAt: -1 },
-        });
-        const total = await ScheduleController.getInstance().count(query);
-        res.json({
-          list: data,
-          total: total,
-        });
+        const list = await StationController.getInstance()
+          .getMany({ query, pagination, sort: { createdAt: -1 } })
+          .select("-company");
+        const total = await StationController.getInstance().count(query);
+        res.json({ list: list, total: total });
       } catch (e: any) {
         responseServerError(res, e);
       }
@@ -64,7 +57,7 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
-        const data = await ScheduleController.getInstance().getById(id);
+        const data = await StationController.getInstance().getById(id);
         res.json(data);
       } catch (e: any) {
         responseServerError(res, e);
@@ -78,13 +71,13 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
-        const body: Partial<ISchedule> = req.body;
-        const data = await ScheduleController.getInstance().update(
+        const body: Partial<IStation> = req.body;
+        const data = await StationController.getInstance().update(
           { _id: id },
           body,
         );
         res.json({
-          msg: "Schedule updated successfully",
+          msg: "Station updated successfully",
           data: data,
         });
       } catch (e: any) {
@@ -99,10 +92,9 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
-        const data = await ScheduleController.getInstance().delete({ _id: id });
+        await StationController.getInstance().delete({ _id: id });
         res.json({
-          msg: "Schedule deleted successfully",
-          data: data,
+          msg: "Station deleted successfully",
         });
       } catch (e: any) {
         responseServerError(res, e);
@@ -110,4 +102,4 @@ const routes: IRoute[] = [
     },
   },
 ];
-export const scheduleRoute = parseToExpressRoute(routes);
+export const stationRoute = parseToExpressRoute(routes);

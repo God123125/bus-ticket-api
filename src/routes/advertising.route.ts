@@ -16,7 +16,7 @@ const routes: IRoute[] = [
   {
     path: "/",
     method: "get",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const pagination: IPaginationForm = req.query;
@@ -36,7 +36,7 @@ const routes: IRoute[] = [
   {
     path: "/",
     method: "post",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     middleware: upload.single("image"),
     handler: async (req: Request, res: Response) => {
       try {
@@ -62,7 +62,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "patch",
-    roles: [RoleEnum.admin],
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
