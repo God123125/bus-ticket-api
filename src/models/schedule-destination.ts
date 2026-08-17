@@ -11,6 +11,8 @@ export interface ISchedule extends IMongoObject {
   arrival_station: string | ObjectId;
   company: string | ObjectId;
   description: string;
+  image: string;
+  imagePublicId: string;
 }
 const schema = new Schema<ISchedule>({
   from: { type: Schema.Types.String, required: true },
@@ -36,5 +38,7 @@ const schema = new Schema<ISchedule>({
     type: Schema.Types.String,
     required: false,
   },
+  image: { type: Schema.Types.String, required: false },
+  imagePublicId: { type: Schema.Types.String, required: false },
 });
 export const scheduleModel = model("schedule_destinations", schema);

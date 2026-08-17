@@ -1,13 +1,18 @@
 import { model, ObjectId, Schema } from "mongoose";
 import { IMongoObject } from "../interfaces/mongo-object";
 import { companyModel } from "./company";
+export interface IBusImage {
+  url: string;
+  publicId: string;
+}
+
 export interface IBus extends IMongoObject {
   model_name: string;
   plate_number: string;
   description: string;
   type: string;
   company: string | ObjectId;
-  row: number;
+  images?: IBusImage[];
 }
 const schema = new Schema<IBus>(
   {
@@ -16,11 +21,12 @@ const schema = new Schema<IBus>(
     description: { type: Schema.Types.String, required: false },
     type: { type: Schema.Types.String, required: false },
     company: { type: Schema.Types.ObjectId, required: true },
-    row: {
-      type: Schema.Types.Number,
-      required: true,
-      ref: companyModel.collection.collectionName,
-    },
+    images: [
+      {
+        url: { type: Schema.Types.String, required: true },
+        publicId: { type: Schema.Types.String, required: true },
+      },
+    ],
   },
   { timestamps: true },
 );

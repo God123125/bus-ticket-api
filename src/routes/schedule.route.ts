@@ -6,14 +6,56 @@ import { responseServerError } from "../utils/log.util";
 import ScheduleController from "../controllers/schedule-destination.controller";
 import { IPaginationForm } from "../interfaces/pagination";
 import { ISchedule } from "../models/schedule-destination";
+import {
+  deleteFromCloudinary,
+  upload,
+  uploadToCloudinary,
+} from "../config/cloudinary";
 const routes: IRoute[] = [
+  {
+    path: "/landing-schedule",
+    method: "get",
+    authentication: false,
+    handler: async (req: Request, res: Response) => {
+      try {
+        const data = await ScheduleController.getInstance()
+          .getMany({})
+          .populate([
+            { path: "departure_station", select: "station_name" },
+            { path: "arrival_station", select: "station_name" },
+            { path: "company", select: ["name", "image"] },
+          ])
+          .limit(4)
+          .select("-imagePublicId");
+        res.json(data);
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
   {
     path: "/",
     method: "post",
     roles: [RoleEnum.Merchant, RoleEnum.Staff],
+    middleware: upload.single("image"),
     handler: async (req: Request, res: Response) => {
       try {
-        const body = { ...req.body, company: req.company };
+        let img = "";
+        let imgPublicId = "";
+        if (req.file) {
+          const { url, publicId } = await uploadToCloudinary(
+            req.file.buffer,
+            "schedules",
+          );
+          img = url;
+          imgPublicId = publicId;
+        }
+        const body = {
+          ...req.body,
+          company: req.company,
+          image: img,
+          imagePublicId: imgPublicId,
+        };
         const data = await ScheduleController.getInstance().create(body);
         res.json({
           msg: "Schedule created successfully",
@@ -42,11 +84,16 @@ const routes: IRoute[] = [
             { to: { $regex: search, $options: "i" } },
           ];
         }
-        const data = await ScheduleController.getInstance().getMany({
-          pagination,
-          query,
-          sort: { createdAt: -1 },
-        });
+        const data = await ScheduleController.getInstance()
+          .getMany({
+            pagination,
+            query,
+            sort: { createdAt: -1 },
+          })
+          .populate([
+            { path: "departure_station", select: "station_name" },
+            { path: "arrival_station", select: "station_name" },
+          ]);
         const total = await ScheduleController.getInstance().count(query);
         res.json({
           list: data,
@@ -64,7 +111,12 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
-        const data = await ScheduleController.getInstance().getById(id);
+        const data = await ScheduleController.getInstance()
+          .getById(id)
+          .populate([
+            { path: "departure_station", select: "station_name" },
+            { path: "arrival_station", select: "station_name" },
+          ]);
         res.json(data);
       } catch (e: any) {
         responseServerError(res, e);
@@ -75,10 +127,23 @@ const routes: IRoute[] = [
     path: "/:id",
     method: "patch",
     roles: [RoleEnum.Merchant, RoleEnum.Staff],
+    middleware: upload.single("image"),
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
         const body: Partial<ISchedule> = req.body;
+        if (req.file) {
+          const existing = await ScheduleController.getInstance().getById(id);
+          if (existing?.imagePublicId) {
+            await deleteFromCloudinary(existing.imagePublicId);
+          }
+          const { url, publicId } = await uploadToCloudinary(
+            req.file.buffer,
+            "schedules",
+          );
+          body.image = url;
+          body.imagePublicId = publicId;
+        }
         const data = await ScheduleController.getInstance().update(
           { _id: id },
           body,
@@ -99,6 +164,10 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
+        const existing = await ScheduleController.getInstance().getById(id);
+        if (existing?.imagePublicId) {
+          await deleteFromCloudinary(existing.imagePublicId);
+        }
         const data = await ScheduleController.getInstance().delete({ _id: id });
         res.json({
           msg: "Schedule deleted successfully",

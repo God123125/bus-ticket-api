@@ -12,14 +12,21 @@ export const userController = {
       const limit = Number(req.query.limit) || 10;
       const search = (req.query.search as string) || "";
       const skip = (page - 1) * limit;
+      let query: any = { role: { $ne: RoleEnum.Admin } };
+      if (search) {
+        query.$or = [
+          { username: { $regex: search, $options: "i" } },
+          { full_name: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (req.company) {
+        query.company = req.company;
+        query.role = {
+          $or: [{ $ne: RoleEnum.Merchant }, { $ne: RoleEnum.Admin }],
+        };
+      }
       const users = await userModel
-        .find({
-          role: { $ne: RoleEnum.Admin },
-          $or: [
-            { username: { $regex: search, $options: "i" } },
-            { full_name: { $regex: search, $options: "i" } },
-          ],
-        })
+        .find(query)
         .limit(limit)
         .skip(skip)
         .sort({ createdAt: -1 })
@@ -67,6 +74,7 @@ export const userController = {
         address: req.body.address ?? "",
         bank_acc_number: req.body.bank_acc_number ?? "",
         bank_acc_name: req.body.bank_acc_name ?? "",
+        company: req.company ?? "",
       };
       await userModel.create(user);
       res.status(201).json(user);

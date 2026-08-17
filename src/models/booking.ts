@@ -8,6 +8,7 @@ export interface IBooking extends IMongoObject {
   booked_seats: string[];
   trip: string | ObjectId;
   status?: string;
+  user_info?: any;
 }
 const schema = new Schema<IBooking>(
   {
@@ -24,6 +25,7 @@ const schema = new Schema<IBooking>(
       required: true,
       ref: tripModel.collection.collectionName,
     },
+    user_info: { type: Schema.Types.Mixed, required: false },
   },
   { timestamps: true },
 );

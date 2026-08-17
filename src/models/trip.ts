@@ -9,6 +9,8 @@ export interface ITrip extends IMongoObject {
   schedule: string | ObjectId;
   departure_date: Date;
   price_per_seat: number;
+  amenities: string[]; // ["TV", "USB", "Wifi"]
+  booked_seats: string[];
 }
 const schema = new Schema<ITrip>(
   {
@@ -35,6 +37,13 @@ const schema = new Schema<ITrip>(
       type: Schema.Types.Number,
       required: true,
     },
+    amenities: [
+      {
+        type: Schema.Types.String,
+        required: false,
+      },
+    ],
+    booked_seats: [{ type: Schema.Types.String, required: false }],
   },
   { timestamps: true },
 );

@@ -3,9 +3,15 @@ import { IRoute } from "../interfaces/route";
 import { parseToExpressRoute } from "../utils/route.util";
 import { responseServerError } from "../utils/log.util";
 import BusController from "../controllers/buses.controller";
-import { IBus } from "../models/bus";
+import { IBus, IBusImage } from "../models/bus";
 import { IPaginationForm } from "../interfaces/pagination";
 import { RoleEnum } from "../interfaces/role-enum";
+import {
+  deleteFromCloudinary,
+  upload,
+  uploadToCloudinary,
+} from "../config/cloudinary";
+
 const routes: IRoute[] = [
   {
     path: "/",
@@ -44,9 +50,17 @@ const routes: IRoute[] = [
     path: "/",
     method: "post",
     roles: [RoleEnum.Merchant, RoleEnum.Staff],
+    middleware: upload.array("images", 3),
     handler: async (req: Request, res: Response) => {
       try {
-        const body: IBus = { ...req.body, company: req.company };
+        const files = req.files as Express.Multer.File[];
+        let images: IBusImage[] = [];
+        if (files && files.length > 0) {
+          images = await Promise.all(
+            files.map((file) => uploadToCloudinary(file.buffer, "buses")),
+          );
+        }
+        const body: IBus = { ...req.body, company: req.company, images };
         const data = await BusController.getInstance().create(body);
         res.json({
           msg: "Bus created successfully!",
@@ -61,12 +75,25 @@ const routes: IRoute[] = [
     path: "/:id",
     method: "patch",
     roles: [RoleEnum.Merchant, RoleEnum.Staff],
+    middleware: upload.array("images", 3),
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
         const bus = await BusController.getInstance().getById(id);
         if (!bus) return res.status(404).json({ msg: "Bus not found!" });
-        const body: Partial<IBus> = req.body;
+        const body: Partial<IBus> = { ...req.body };
+        const files = req.files as Express.Multer.File[];
+        if (files && files.length > 0) {
+          if (bus.images && bus.images.length > 0) {
+            await Promise.all(
+              bus.images.map((img) => deleteFromCloudinary(img.publicId)),
+            );
+          }
+          const images = await Promise.all(
+            files.map((file) => uploadToCloudinary(file.buffer, "buses")),
+          );
+          body.images = images;
+        }
         const data = await BusController.getInstance().update(
           { _id: id },
           body,
@@ -89,6 +116,11 @@ const routes: IRoute[] = [
         const id = req.params.id as string;
         const bus = await BusController.getInstance().getById(id);
         if (!bus) return res.status(404).json({ msg: "Bus not found!" });
+        if (bus.images && bus.images.length > 0) {
+          await Promise.all(
+            bus.images.map((img) => deleteFromCloudinary(img.publicId)),
+          );
+        }
         const data = await BusController.getInstance().delete({ _id: id });
         res.json({
           msg: "Bus deleted successfully!",
