@@ -1,6 +1,10 @@
 import BookingController from "../controllers/booking.controller";
+import CommissionController from "../controllers/commission.controller";
+import CompanyController from "../controllers/company.controller";
 import { IRoute } from "../interfaces/route";
 import { IBooking } from "../models/booking";
+import { ICommission } from "../models/commission";
+import { ICompany } from "../models/company";
 import { responseServerError } from "../utils/log.util";
 import { parseToExpressRoute } from "../utils/route.util";
 import { Request, Response } from "express";
@@ -17,6 +21,18 @@ const routes: IRoute[] = [
           ...req.body,
         };
         const data = await BookingController.getInstance().create(body);
+        const comission = data.map(async (item) => {
+          const company = (await CompanyController.getInstance().getById(
+            item.company,
+          )) as ICompany;
+          return {
+            company: item.company,
+            trip: item.trip,
+            total_commission:
+              item.total_price * (company?.commission_rate ?? 0),
+          };
+        });
+        await CommissionController.getInstance().insertMany(comission as any);
         return res.status(200).json({
           msg: "Booking created successfully!",
           data: data,

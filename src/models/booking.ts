@@ -9,6 +9,7 @@ export interface IBooking extends IMongoObject {
   trip: string | ObjectId;
   status?: string;
   user_info?: any;
+  company: string | ObjectId;
 }
 const schema = new Schema<IBooking>(
   {
@@ -26,6 +27,11 @@ const schema = new Schema<IBooking>(
       ref: tripModel.collection.collectionName,
     },
     user_info: { type: Schema.Types.Mixed, required: false },
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "companies",
+      required: true,
+    },
   },
   { timestamps: true },
 );
