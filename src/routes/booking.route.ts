@@ -47,5 +47,70 @@ const routes: IRoute[] = [
       }
     },
   },
+  {
+    path: "/:id",
+    method: "patch",
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const booking = await BookingController.getInstance().getById(id);
+        if (!booking)
+          return res.status(404).json({ msg: "Booking not found!" });
+        const body: Partial<IBooking> = {
+          ...req.body,
+          user: req.user,
+        };
+        const data = await BookingController.getInstance().update(
+          { _id: id },
+          body,
+        );
+        return res.status(200).json({
+          msg: "Booking updated successfully!",
+          data: data,
+        });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/:id",
+    method: "delete",
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const booking = await BookingController.getInstance().getById(id);
+        if (!booking)
+          return res.status(404).json({ msg: "Booking not found!" });
+        const data = await BookingController.getInstance().delete({ _id: id });
+        return res.status(200).json({
+          msg: "Booking deleted successfully!",
+          data: data,
+        });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/:id",
+    method: "get",
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const booking = await BookingController.getInstance()
+          .getById(id)
+          .populate([{ path: "user" }, { path: "trip" }]);
+        if (!booking)
+          return res.status(404).json({ msg: "Booking not found!" });
+        return res.status(200).json({
+          msg: "Booking fetched successfully!",
+          data: booking,
+        });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
 ];
 export const bookingRoute = parseToExpressRoute(routes);
