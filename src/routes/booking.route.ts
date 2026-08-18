@@ -1,9 +1,9 @@
 import BookingController from "../controllers/booking.controller";
 import CommissionController from "../controllers/commission.controller";
 import CompanyController from "../controllers/company.controller";
+import TripController from "../controllers/trip.controller";
 import { IRoute } from "../interfaces/route";
 import { IBooking } from "../models/booking";
-import { ICommission } from "../models/commission";
 import { ICompany } from "../models/company";
 import { responseServerError } from "../utils/log.util";
 import { parseToExpressRoute } from "../utils/route.util";
@@ -20,19 +20,44 @@ const routes: IRoute[] = [
           user: req.user,
           ...req.body,
         };
+
+        if (!body.company && body.trip) {
+          const tripDoc = await TripController.getInstance().getById(body.trip);
+          if (tripDoc) {
+            body.company = tripDoc.company;
+          }
+        }
+
         const data = await BookingController.getInstance().create(body);
-        const comission = data.map(async (item) => {
-          const company = (await CompanyController.getInstance().getById(
-            item.company,
-          )) as ICompany;
-          return {
-            company: item.company,
-            trip: item.trip,
-            total_commission:
-              item.total_price * (company?.commission_rate ?? 0),
-          };
-        });
-        await CommissionController.getInstance().insertMany(comission as any);
+
+        if (body.trip && body.booked_seats && body.booked_seats.length > 0) {
+          await TripController.getInstance().update({ _id: body.trip }, {
+            $addToSet: { booked_seats: { $each: body.booked_seats } },
+          } as any);
+        }
+
+        const items = Array.isArray(data) ? data : [data];
+        const commissions = await Promise.all(
+          items.map(async (item) => {
+            if (!item.company) return null;
+            const company = (await CompanyController.getInstance().getById(
+              item.company,
+            )) as ICompany;
+            return {
+              company: item.company,
+              trip: item.trip,
+              total_commission:
+                (item.total_price * (company?.commission_rate ?? 0)) / 100,
+            };
+          }),
+        );
+        const validCommissions = commissions.filter(Boolean);
+        if (validCommissions.length > 0) {
+          await CommissionController.getInstance().insertMany(
+            validCommissions as any,
+          );
+        }
+
         return res.status(200).json({
           msg: "Booking created successfully!",
           data: data,
@@ -66,6 +91,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "patch",
+    authentication: false,
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -74,7 +100,7 @@ const routes: IRoute[] = [
           return res.status(404).json({ msg: "Booking not found!" });
         const body: Partial<IBooking> = {
           ...req.body,
-          user: req.user,
+          ...(req.user ? { user: req.user } : {}),
         };
         const data = await BookingController.getInstance().update(
           { _id: id },
@@ -92,6 +118,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "delete",
+    authentication: false,
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -111,6 +138,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "get",
+    authentication: false,
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;

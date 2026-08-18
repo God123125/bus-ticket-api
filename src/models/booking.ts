@@ -3,20 +3,20 @@ import { clientUserModel } from "./client-user";
 import { IMongoObject } from "../interfaces/mongo-object";
 import { tripModel } from "./trip";
 export interface IBooking extends IMongoObject {
-  user: string | ObjectId;
+  user?: string | ObjectId;
   total_price: number;
   booked_seats: string[];
   trip: string | ObjectId;
   status?: string;
   user_info?: any;
-  company: string | ObjectId;
+  company?: string | ObjectId;
 }
 const schema = new Schema<IBooking>(
   {
     user: {
       type: Schema.Types.ObjectId,
       ref: clientUserModel.collection.collectionName,
-      required: true,
+      required: false,
     },
     total_price: { type: Schema.Types.Number, required: true },
     status: { type: Schema.Types.String, required: false, default: "pending" },
@@ -30,7 +30,7 @@ const schema = new Schema<IBooking>(
     company: {
       type: Schema.Types.ObjectId,
       ref: "companies",
-      required: true,
+      required: false,
     },
   },
   { timestamps: true },
