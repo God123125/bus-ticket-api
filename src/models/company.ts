@@ -9,6 +9,8 @@ export interface ICompany extends IMongoObject {
   owner: string | ObjectId;
   commission_rate: number;
   color: string;
+  khqrImage?: string;
+  khqrImagePublicId?: string;
 }
 const schema: Schema<ICompany> = new Schema<ICompany>(
   {
@@ -24,6 +26,8 @@ const schema: Schema<ICompany> = new Schema<ICompany>(
       ref: "users",
       required: true,
     },
+    khqrImage: { type: Schema.Types.String, required: false },
+    khqrImagePublicId: { type: Schema.Types.String, required: false },
   },
   { timestamps: true },
 );

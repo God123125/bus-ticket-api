@@ -44,19 +44,26 @@ const routes: IRoute[] = [
     path: "/",
     method: "post",
     roles: [RoleEnum.Admin],
-    middleware: upload.single("image"),
+    middleware: [upload.single("image"), upload.single("khqrImage")],
     handler: async (req: Request, res: Response) => {
       try {
         let imageUrl = "";
         let publicId = "";
-
+        let khqrImageUrl = "";
+        let khqrPublicId = "";
         if (req.file) {
           const cloudRes = await uploadToCloudinary(
             req.file.buffer,
             "companies",
           );
+          const cloudRes2 = await uploadToCloudinary(
+            req.file.buffer,
+            "companies",
+          );
           imageUrl = cloudRes.url;
           publicId = cloudRes.publicId;
+          khqrImageUrl = cloudRes2.url;
+          khqrPublicId = cloudRes2.publicId;
         }
 
         const body: ICompany = req.body;
@@ -90,7 +97,7 @@ const routes: IRoute[] = [
     path: "/:id",
     method: "patch",
     roles: [RoleEnum.Admin, RoleEnum.Merchant],
-    middleware: upload.single("image"),
+    middleware: [upload.single("image"), upload.single("khqrImage")],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -103,12 +110,21 @@ const routes: IRoute[] = [
           if (existing?.imagePublicId) {
             await deleteFromCloudinary(existing.imagePublicId);
           }
+          if (existing?.khqrImagePublicId) {
+            await deleteFromCloudinary(existing.khqrImagePublicId);
+          }
           const cloudRes = await uploadToCloudinary(
+            req.file.buffer,
+            "companies",
+          );
+          const cloudRes2 = await uploadToCloudinary(
             req.file.buffer,
             "companies",
           );
           body.image = cloudRes.url;
           body.imagePublicId = cloudRes.publicId;
+          body.khqrImage = cloudRes2.url;
+          body.khqrImagePublicId = cloudRes2.publicId;
         }
 
         const data = await CompanyController.getInstance().update(
@@ -133,6 +149,9 @@ const routes: IRoute[] = [
         });
         if (company?.imagePublicId) {
           await deleteFromCloudinary(company.imagePublicId);
+        }
+        if (company?.khqrImagePublicId) {
+          await deleteFromCloudinary(company.khqrImagePublicId);
         }
         await CompanyController.getInstance().delete({ _id: id });
         res.json({ msg: "Company deleted successfully!" });
