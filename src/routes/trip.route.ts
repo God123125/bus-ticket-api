@@ -7,6 +7,7 @@ import { RoleEnum } from "../interfaces/role-enum";
 import { IPaginationForm } from "../interfaces/pagination";
 import { ITrip } from "../models/trip";
 import { parseStringArray } from "../utils/parse-string-array.util";
+import ScheduleController from "../controllers/schedule-destination.controller";
 
 const routes: IRoute[] = [
   {
@@ -16,9 +17,20 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const schedule = req.query.schedule as string;
+        const from = req.query.from as string;
+        const to = req.query.to as string;
         let query: any = {};
         if (schedule) {
           query.schedule = schedule;
+        } else if (from && to) {
+          const scheduleQuery = {
+            from: from,
+            to: to,
+          };
+          const scheduleIds = await ScheduleController.getInstance().getMany({
+            query: scheduleQuery,
+          });
+          query.schedule = { $in: scheduleIds.map((item) => item._id) };
         }
         const data = await TripController.getInstance()
           .getMany({
