@@ -57,7 +57,7 @@ const routes: IRoute[] = [
         const data = await TripController.getInstance()
           .getById(id)
           .populate([
-            { path: "bus" },
+            { path: "bus", select: ["-images.publicId"] },
             { path: "schedule" },
             { path: "company", select: ["name", "image"] },
           ]);
