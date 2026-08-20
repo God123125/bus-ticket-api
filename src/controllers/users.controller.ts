@@ -74,7 +74,7 @@ export const userController = {
         address: req.body.address ?? "",
         bank_acc_number: req.body.bank_acc_number ?? "",
         bank_acc_name: req.body.bank_acc_name ?? "",
-        company: req.company ?? "",
+        company: req.company || req.body.company || null,
       };
       await userModel.create(user);
       res.status(201).json(user);
@@ -108,7 +108,7 @@ export const userController = {
       user.address = req.body.address;
       user.bank_acc_number = req.body.bank_acc_number;
       user.bank_acc_name = req.body.bank_acc_name;
-      user.company = req.body.company;
+      user.company = req.body.company ? req.body.company : null;
       await user.save();
       res.status(200).json(user);
     } catch (e: any) {
