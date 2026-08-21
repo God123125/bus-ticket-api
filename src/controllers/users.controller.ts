@@ -5,6 +5,7 @@ import * as bcrypt from "bcrypt";
 import { responseServerError } from "../utils/log.util";
 import { getToken, getExpirationDate } from "../auth/auth.service";
 import { RoleEnum } from "../interfaces/role-enum";
+import { companyModel } from "../models/company";
 export const userController = {
   getMany: async (req: Request, res: Response) => {
     try {
@@ -144,9 +145,13 @@ export const userController = {
       };
       const token = getToken(data as any);
       const expireAt = getExpirationDate(token);
+      const companyData = await companyModel.findById(user.company);
       const userResponse = {
         username: user.username,
         role: user.role,
+        company_image: companyData?.image,
+        company_name: companyData?.name,
+        company_color: companyData?.color,
       };
       res.json({
         user: userResponse,
