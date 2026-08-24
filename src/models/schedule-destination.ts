@@ -3,8 +3,8 @@ import { stationModel } from "./station";
 import { companyModel } from "./company";
 import { IMongoObject } from "../interfaces/mongo-object";
 export interface ISchedule extends IMongoObject {
-  from: string;
-  to: string;
+  from: string | ObjectId;
+  to: string | ObjectId;
   departure_time: string;
   arrival_time: string;
   departure_station: string | ObjectId;
@@ -15,8 +15,8 @@ export interface ISchedule extends IMongoObject {
   imagePublicId: string;
 }
 const schema = new Schema<ISchedule>({
-  from: { type: Schema.Types.String, required: true },
-  to: { type: Schema.Types.String, required: true },
+  from: { type: Schema.Types.ObjectId, required: true, ref: "geographics" },
+  to: { type: Schema.Types.ObjectId, required: true, ref: "geographics" },
   departure_time: { type: Schema.Types.String, required: true },
   arrival_time: { type: Schema.Types.String, required: true },
   departure_station: {

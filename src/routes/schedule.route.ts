@@ -24,6 +24,8 @@ const routes: IRoute[] = [
             { path: "departure_station", select: "station_name" },
             { path: "arrival_station", select: "station_name" },
             { path: "company", select: ["name", "image"] },
+            { path: "from" },
+            { path: "to" },
           ])
           .limit(4)
           .select("-imagePublicId");
@@ -93,6 +95,8 @@ const routes: IRoute[] = [
           .populate([
             { path: "departure_station", select: "station_name" },
             { path: "arrival_station", select: "station_name" },
+            { path: "from" },
+            { path: "to" },
           ]);
         const total = await ScheduleController.getInstance().count(query);
         res.json({
@@ -116,6 +120,8 @@ const routes: IRoute[] = [
           .populate([
             { path: "departure_station", select: "station_name" },
             { path: "arrival_station", select: "station_name" },
+            { path: "from" },
+            { path: "to" },
           ]);
         res.json(data);
       } catch (e: any) {

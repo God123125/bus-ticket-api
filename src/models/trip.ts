@@ -11,6 +11,7 @@ export interface ITrip extends IMongoObject {
   price_per_seat: number;
   amenities: string[]; // ["TV", "USB", "Wifi"]
   booked_seats: string[];
+  status: string;
 }
 const schema = new Schema<ITrip>(
   {
@@ -44,6 +45,11 @@ const schema = new Schema<ITrip>(
       },
     ],
     booked_seats: [{ type: Schema.Types.String, required: false }],
+    status: {
+      type: Schema.Types.String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   { timestamps: true },
 );

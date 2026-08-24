@@ -5,6 +5,7 @@ import { responseServerError } from "../utils/log.util";
 import { IGeographic } from "../models/geographic";
 import GeographicController from "../controllers/geographic.controller";
 import { IPaginationForm } from "../interfaces/pagination";
+import { parseToExpressRoute } from "../utils/route.util";
 
 const routes: IRoute[] = [
   {
@@ -27,7 +28,7 @@ const routes: IRoute[] = [
   {
     path: "/",
     method: "get",
-    roles: [RoleEnum.Admin, RoleEnum.Merchant],
+    authentication: false,
     handler: async (req: Request, res: Response) => {
       try {
         const pagination: IPaginationForm = {
@@ -35,15 +36,20 @@ const routes: IRoute[] = [
           limit: Number(req.query.limit) || 10,
         };
         const search = req.query.search;
-        let query: any = { company: req.company };
+        let query: any = {};
         if (search) {
-          query.station_name = { $regex: search, $options: "i" };
+          query.$or = [
+            { name_kh: { $regex: search, $options: "i" } },
+            { name_en: { $regex: search, $options: "i" } },
+          ];
         }
-        const data = await GeographicController.getInstance().getMany({
-          query,
-          pagination,
-          sort: { createdAt: -1 },
-        });
+        const data = await GeographicController.getInstance()
+          .getMany({
+            query,
+            pagination,
+            sort: { createdAt: -1 },
+          })
+          .select("-__v");
         const total = await GeographicController.getInstance().count(query);
         res.json({ list: data, total: total });
       } catch (e: any) {
@@ -97,5 +103,19 @@ const routes: IRoute[] = [
       }
     },
   },
+  {
+    path: "/:id",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant],
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const data = await GeographicController.getInstance().getById(id);
+        res.json(data);
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
 ];
-export const geographicRoute = routes;
+export const geographicRoute = parseToExpressRoute(routes);

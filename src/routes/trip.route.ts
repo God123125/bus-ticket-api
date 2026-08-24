@@ -9,6 +9,23 @@ import { ITrip } from "../models/trip";
 import { parseStringArray } from "../utils/parse-string-array.util";
 import ScheduleController from "../controllers/schedule-destination.controller";
 
+function getISODateRange(dateValue?: any) {
+  if (!dateValue) return undefined;
+  const d = new Date(String(dateValue));
+  if (isNaN(d.getTime())) return undefined;
+
+  const start = new Date(d);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(d);
+  end.setHours(23, 59, 59, 999);
+
+  return {
+    $gte: start.toISOString(),
+    $lte: end.toISOString(),
+  };
+}
+
 const routes: IRoute[] = [
   {
     path: "/by-schedule",
@@ -19,26 +36,74 @@ const routes: IRoute[] = [
         const schedule = req.query.schedule as string;
         const from = req.query.from as string;
         const to = req.query.to as string;
+        const departure_date = req.query.departure_date;
+        const return_date = req.query.return_date;
         let query: any = {};
+
+        const departureRange = getISODateRange(departure_date);
+        const returnRange = getISODateRange(return_date);
+
         if (schedule) {
           query.schedule = schedule;
+          if (departureRange) {
+            query.departure_date = departureRange;
+          }
         } else if (from && to) {
-          const scheduleQuery = {
-            from: from,
-            to: to,
-          };
-          const scheduleIds = await ScheduleController.getInstance().getMany({
-            query: scheduleQuery,
-          });
-          query.schedule = { $in: scheduleIds.map((item) => item._id) };
+          const outboundSchedules =
+            await ScheduleController.getInstance().getMany({
+              query: { from: from, to: to },
+            });
+          const outboundScheduleIds = outboundSchedules.map(
+            (item) => item._id,
+          );
+
+          const orConditions: any[] = [];
+
+          if (outboundScheduleIds.length > 0) {
+            const outboundCondition: any = {
+              schedule: { $in: outboundScheduleIds },
+            };
+            if (departureRange) {
+              outboundCondition.departure_date = departureRange;
+            }
+            orConditions.push(outboundCondition);
+          }
+
+          if (return_date) {
+            const returnSchedules =
+              await ScheduleController.getInstance().getMany({
+                query: { from: to, to: from },
+              });
+            const returnScheduleIds = returnSchedules.map((item) => item._id);
+            if (returnScheduleIds.length > 0) {
+              const returnCondition: any = {
+                schedule: { $in: returnScheduleIds },
+              };
+              if (returnRange) {
+                returnCondition.departure_date = returnRange;
+              }
+              orConditions.push(returnCondition);
+            }
+          }
+
+          if (orConditions.length > 0) {
+            query = { $or: orConditions };
+          } else {
+            return res.json([]);
+          }
         }
+
         const data = await TripController.getInstance()
           .getMany({
             query: query,
           })
           .populate([
             { path: "bus" },
-            { path: "schedule" },
+            {
+              path: "schedule",
+              populate: [{ path: "from" }, { path: "to" }],
+              select: ["-imagePublicId"],
+            },
             { path: "company", select: ["name", "image"] },
           ]);
         res.json(data);
@@ -58,7 +123,7 @@ const routes: IRoute[] = [
           .getById(id)
           .populate([
             { path: "bus", select: ["-images.publicId"] },
-            { path: "schedule" },
+            { path: "schedule", populate: [{ path: "from" }, { path: "to" }] },
             { path: "company", select: ["name", "image"] },
           ]);
         if (!data) {
@@ -120,7 +185,12 @@ const routes: IRoute[] = [
         const list = await TripController.getInstance()
           .getMany({ query, pagination, sort: { createdAt: -1 } })
           .select("-company")
-          .populate([{ path: "bus" }, { path: "schedule" }]);
+          .populate({
+            path: "schedule",
+            populate: [{ path: "from" }, { path: "to" }],
+            select: "-imagePublicId",
+          })
+          .populate("bus");
         const total = await TripController.getInstance().count(query);
         res.json({ list: list, total: total });
       } catch (e: any) {
@@ -137,7 +207,14 @@ const routes: IRoute[] = [
         const id = req.params.id as string;
         const data = await TripController.getInstance()
           .getOne({ query: { _id: id, company: req.company } })
-          .populate([{ path: "bus" }, { path: "schedule" }])
+          .populate([
+            { path: "bus" },
+            {
+              path: "schedule",
+              populate: [{ path: "from" }, { path: "to" }],
+              select: "-imagePublicId",
+            },
+          ])
           .select(["-company", "-imagePublicId"]);
         res.json(data);
       } catch (e: any) {
