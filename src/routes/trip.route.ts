@@ -53,9 +53,7 @@ const routes: IRoute[] = [
             await ScheduleController.getInstance().getMany({
               query: { from: from, to: to },
             });
-          const outboundScheduleIds = outboundSchedules.map(
-            (item) => item._id,
-          );
+          const outboundScheduleIds = outboundSchedules.map((item) => item._id);
 
           const orConditions: any[] = [];
 
@@ -119,13 +117,14 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
-        const data = await TripController.getInstance()
-          .getById(id)
-          .populate([
-            { path: "bus", select: ["-images.publicId"] },
-            { path: "schedule", populate: [{ path: "from" }, { path: "to" }] },
-            { path: "company", select: ["name", "image"] },
-          ]);
+        // const data = await TripController.getInstance()
+        //   .getById(id)
+        //   .populate([
+        //     { path: "bus", select: ["-images.publicId"] },
+        //     { path: "schedule", populate: [{ path: "from" }, { path: "to" }] },
+        //     { path: "company", select: ["name", "image"] },
+        //   ]);
+        const data = TripController.getInstance().getByScheduleId(id);
         if (!data) {
           return res.status(404).json({ message: "Trip not found" });
         }
