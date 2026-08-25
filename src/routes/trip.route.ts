@@ -144,6 +144,9 @@ const routes: IRoute[] = [
           ...req.body,
           company: req.company,
           amenities: parseStringArray(req.body.amenities),
+          price_per_seat:
+            Number(req.body.price_per_seat) -
+            Number(req.body.price_per_seat) * Number(req.body.discount ?? 0),
         };
         const data = await TripController.getInstance().create(body);
         res.json({
@@ -231,6 +234,9 @@ const routes: IRoute[] = [
         const body: Partial<ITrip> = {
           ...req.body,
           amenities: parseStringArray(req.body.amenities),
+          price_per_seat:
+            Number(req.body.price_per_seat) -
+            Number(req.body.price_per_seat) * Number(req.body.discount ?? 0),
         };
 
         const data = await TripController.getInstance().update(
