@@ -12,6 +12,8 @@ export interface IUser extends IMongoObject {
   bank_acc_number: string;
   bank_acc_name: string;
   company?: string | ObjectId;
+  telegram_chat_id?: string;
+  telegram_username?: string;
 }
 const schema: Schema<IUser> = new Schema<IUser>(
   {
@@ -30,6 +32,8 @@ const schema: Schema<IUser> = new Schema<IUser>(
       ref: "companies",
       required: false,
     },
+    telegram_chat_id: { type: Schema.Types.String, required: false },
+    telegram_username: { type: Schema.Types.String, required: false },
   },
   { timestamps: true },
 );

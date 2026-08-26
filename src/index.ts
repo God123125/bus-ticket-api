@@ -3,11 +3,7 @@ import cors from "cors";
 import appRouter from "./routes/routers";
 import * as model from "./models";
 import { logColors, log } from "./utils/log.util";
-import {
-  deleteWebhook,
-  setTelegramWebhook,
-  startTelegramPolling,
-} from "./utils/telegram.util";
+import { startTelegramPolling } from "./controllers/telegram.controller";
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors());
