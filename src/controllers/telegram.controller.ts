@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import axios from "axios";
 import { userModel } from "../models/users";
 import { Request, Response } from "express";
+import BookingController from "./booking.controller";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME; //
 export const generateLinkToken = async (userId: string): Promise<string> => {
@@ -154,15 +155,12 @@ export const startTelegramPolling = async () => {
 
             console.log("Approve booking:", bookingId);
 
-            // TODO:
-            // Update your database here
-            //
-            // await Booking.findByIdAndUpdate(
-            //   bookingId,
-            //   {
-            //     status: "CONFIRMED"
-            //   }
-            // );
+            await BookingController.getInstance().update(
+              { _id: bookingId },
+              {
+                status: "CONFIRMED",
+              },
+            );
 
             await answerCallbackQuery(callbackQuery.id, "✅ Booking approved!");
 
@@ -186,15 +184,12 @@ export const startTelegramPolling = async () => {
 
             console.log("Reject booking:", bookingId);
 
-            // TODO:
-            // Update your database
-            //
-            // await Booking.findByIdAndUpdate(
-            //   bookingId,
-            //   {
-            //     status: "REJECTED"
-            //   }
-            // );
+            await BookingController.getInstance().update(
+              { _id: bookingId },
+              {
+                status: "REJECTED",
+              },
+            );
 
             await answerCallbackQuery(callbackQuery.id, "❌ Booking rejected!");
 

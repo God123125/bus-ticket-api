@@ -19,7 +19,7 @@ const schema = new Schema<IBooking>(
       required: false,
     },
     total_price: { type: Schema.Types.Number, required: true },
-    status: { type: Schema.Types.String, required: false, default: "pending" },
+    status: { type: Schema.Types.String, required: false, default: "PENDING" },
     booked_seats: [{ type: Schema.Types.String, required: false }],
     trip: {
       type: Schema.Types.ObjectId,
