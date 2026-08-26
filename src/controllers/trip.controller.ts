@@ -108,7 +108,13 @@ export default class TripController extends Controller<ITrip> {
       },
       {
         $addFields: {
-          seat_holds: { $ifNull: ["$seat_holds.booked_seats", []] },
+          seat_holds: {
+            $reduce: {
+              input: "$seat_holds.booked_seats",
+              initialValue: [],
+              in: { $concatArrays: ["$$value", "$$this"] },
+            },
+          },
         },
       },
     ]);
