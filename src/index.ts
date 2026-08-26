@@ -3,6 +3,11 @@ import cors from "cors";
 import appRouter from "./routes/routers";
 import * as model from "./models";
 import { logColors, log } from "./utils/log.util";
+import {
+  deleteWebhook,
+  setTelegramWebhook,
+  startTelegramPolling,
+} from "./utils/telegram.util";
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors());
@@ -25,7 +30,14 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 app.use("/api", appRouter);
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`Server running on port http://localhost:${PORT}`);
+  // await deleteWebhook();
+  // await setTelegramWebhook(
+  //   `https://loud-snakes-invite.loca.lt//api/telegram/webhook`,
+  // );
+
+  // console.log("Telegram webhook configured");
+  startTelegramPolling();
 });
 model.connect();

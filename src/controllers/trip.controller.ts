@@ -1,4 +1,4 @@
-import { ObjectId } from "mongoose";
+import { ObjectId, Types } from "mongoose";
 import { ITrip, tripModel } from "../models/trip";
 import { Controller } from "./controller";
 
@@ -14,11 +14,12 @@ export default class TripController extends Controller<ITrip> {
     return TripController.instance;
   }
   public async getByScheduleId(tripId: string | ObjectId) {
+    const objectId =
+      typeof tripId === "string" ? new Types.ObjectId(tripId) : tripId;
     const trip = await this.model.aggregate([
       {
         $match: {
-          _id: tripId,
-          status: "active",
+          _id: objectId,
         },
       },
       {
@@ -70,6 +71,11 @@ export default class TripController extends Controller<ITrip> {
               },
             },
             { $unwind: { path: "$to", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                imagePublicId: 0,
+              },
+            },
           ],
         },
       },
@@ -102,10 +108,10 @@ export default class TripController extends Controller<ITrip> {
       },
       {
         $addFields: {
-          seat_holds: "$seat_holds.booked_seats",
+          seat_holds: { $ifNull: ["$seat_holds.booked_seats", []] },
         },
       },
     ]);
-    return trip;
+    return trip[0];
   }
 }

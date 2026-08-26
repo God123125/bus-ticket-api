@@ -83,14 +83,12 @@ const routes: IRoute[] = [
               orConditions.push(returnCondition);
             }
           }
-
           if (orConditions.length > 0) {
             query = { $or: orConditions };
           } else {
             return res.json([]);
           }
         }
-
         const data = await TripController.getInstance()
           .getMany({
             query: query,
@@ -124,7 +122,7 @@ const routes: IRoute[] = [
         //     { path: "schedule", populate: [{ path: "from" }, { path: "to" }] },
         //     { path: "company", select: ["name", "image"] },
         //   ]);
-        const data = TripController.getInstance().getByScheduleId(id);
+        const data = await TripController.getInstance().getByScheduleId(id);
         if (!data) {
           return res.status(404).json({ message: "Trip not found" });
         }
