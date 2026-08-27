@@ -122,7 +122,7 @@ const routes: IRoute[] = [
         //     { path: "schedule", populate: [{ path: "from" }, { path: "to" }] },
         //     { path: "company", select: ["name", "image"] },
         //   ]);
-        const data = await TripController.getInstance().getByScheduleId(id);
+        const data = await TripController.getInstance().getByTripId(id);
         if (!data) {
           return res.status(404).json({ message: "Trip not found" });
         }

@@ -39,7 +39,7 @@ export const getLinkQrForUser = async (req: Request, res: Response) => {
     const token = await generateLinkToken(userId);
     const qrDataUrl = await generateTelegramLinkQr(token);
 
-    res.status(200).json({ qrDataUrl, expiresInMinutes: 15 });
+    res.status(200).json({ qrDataUrl });
   } catch (e) {
     console.log("getLinkQrForUser error:", e);
     res.status(500).json({ message: "Failed to generate linking QR" });

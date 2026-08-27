@@ -13,7 +13,7 @@ export default class TripController extends Controller<ITrip> {
     }
     return TripController.instance;
   }
-  public async getByScheduleId(tripId: string | ObjectId) {
+  public async getByTripId(tripId: string | ObjectId) {
     const objectId =
       typeof tripId === "string" ? new Types.ObjectId(tripId) : tripId;
     const trip = await this.model.aggregate([
@@ -82,7 +82,7 @@ export default class TripController extends Controller<ITrip> {
       { $unwind: { path: "$schedule", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: "seat_holds",
+          from: "seat-holds",
           let: { tripId: "$_id" },
           pipeline: [
             {
@@ -101,18 +101,12 @@ export default class TripController extends Controller<ITrip> {
         },
       },
       {
-        $unwind: {
-          path: "$seat_holds",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
         $addFields: {
           seat_holds: {
             $reduce: {
-              input: "$seat_holds.booked_seats",
+              input: "$seat_holds",
               initialValue: [],
-              in: { $concatArrays: ["$$value", "$$this"] },
+              in: { $concatArrays: ["$$value", "$$this.booked_seats"] },
             },
           },
         },

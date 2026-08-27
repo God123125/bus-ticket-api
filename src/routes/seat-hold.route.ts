@@ -66,5 +66,26 @@ const routes: IRoute[] = [
       }
     },
   },
+  {
+    path: "/:id",
+    method: "patch",
+    authentication: false,
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const body: Partial<ISeatHold> = req.body;
+        const data = await SeatHoldController.getInstance().update(
+          { _id: id },
+          body,
+        );
+        return res.status(200).json({
+          msg: "Hold seat updated successfully!",
+          data: data,
+        });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
 ];
 export const seatHoldRoute = parseToExpressRoute(routes);
