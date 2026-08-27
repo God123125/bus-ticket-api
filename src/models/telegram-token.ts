@@ -12,6 +12,7 @@ const schema = new Schema<ITelegramToken>(
     userId: { type: Schema.Types.String, required: true, ref: "users" },
     token: { type: Schema.Types.String, required: true },
     used: { type: Schema.Types.Boolean, default: false },
+    createdAt: { type: Schema.Types.Date, default: Date.now, expires: "5m" },
   },
   { timestamps: true },
 );

@@ -39,7 +39,7 @@ export const getLinkQrForUser = async (req: Request, res: Response) => {
     const token = await generateLinkToken(userId);
     const qrDataUrl = await generateTelegramLinkQr(token);
 
-    res.status(200).json({ qrDataUrl });
+    res.status(200).json({ qrDataUrl, expiredIn: 5 * 60 * 1000 });
   } catch (e) {
     console.log("getLinkQrForUser error:", e);
     res.status(500).json({ message: "Failed to generate linking QR" });
@@ -53,6 +53,23 @@ export const sendMessageToUser = async (
     await axios.post(`${TELEGRAM_API}/sendMessage`, {
       chat_id: chatId,
       text,
+    });
+  } catch (e) {
+    console.log("Telegram sendMessage error:", e);
+  }
+};
+export const askForContact = async (chatId: string) => {
+  try {
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
+      chat_id: chatId,
+      text: "Please share your contact number",
+      reply_markup: {
+        keyboard: [
+          [{ text: "📱 Share my phone number", request_contact: true }],
+        ],
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
     });
   } catch (e) {
     console.log("Telegram sendMessage error:", e);
@@ -91,6 +108,20 @@ export const removeButtons = async (
     console.error("Failed to remove Telegram buttons:", error);
   }
 };
+export const removeReplyKeyboard = async (
+  chatId: number | string,
+  text: string,
+) => {
+  try {
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      reply_markup: { remove_keyboard: true },
+    });
+  } catch (e) {
+    console.log("Telegram removeReplyKeyboard error:", e);
+  }
+};
 export const startTelegramPolling = async () => {
   let offset = 0;
 
@@ -118,21 +149,76 @@ export const startTelegramPolling = async () => {
           const token = parts[1];
           const chatId = message.chat.id;
           const from = message.from;
-          const telegramUser = await telegramTokenModel.findOne({ token });
-          if (telegramUser) {
-            const user = await userModel.findById(telegramUser.userId);
-            if (user) {
-              user.telegram_chat_id = chatId;
-              user.telegram_username = from.username
-                ? from.username
-                : `${from.last_name} ${from.first_name}`;
-              await user.save();
-              await sendMessageToUser(
-                chatId,
-                `✅ Thanks ${from.first_name} ${from.last_name}, your account is now linked! You'll receive payment confirmation requests here.`,
-              );
-            }
+          if (!token) {
+            await sendMessageToUser(
+              chatId,
+              "Welcome! Please scan the QR code from the app to link your account.",
+            );
+            continue;
           }
+
+          const linkToken = await telegramTokenModel.findOne({
+            token,
+            used: false,
+          });
+
+          if (!linkToken) {
+            await sendMessageToUser(
+              chatId,
+              "This link has expired or was already used. Please generate a new QR code.",
+            );
+            continue;
+          }
+          linkToken.used = true;
+          await linkToken.save();
+          const user = await userModel.findById(linkToken.userId);
+          if (user) {
+            user.telegram_chat_id = chatId;
+            user.telegram_username = from.username
+              ? from.username
+              : `${from.last_name} ${from.first_name}`;
+            await user.save();
+            await sendMessageToUser(
+              chatId,
+              `✅ Thanks ${from.first_name} ${from.last_name}`,
+            );
+            await askForContact(chatId);
+            continue;
+          }
+        }
+        if (update.message?.contact) {
+          const message = update.message;
+          const chatId = message.chat.id;
+          const phoneNumber = message.contact.phone_number;
+          const user = await userModel.findOne({
+            telegram_chat_id: chatId,
+          });
+          if (user) {
+            user.tel = phoneNumber;
+            await user.save();
+          }
+          // Make sure it's their own contact card, not one they forwarded from someone else
+          const isOwnContact = message.contact.user_id === message.from.id;
+
+          if (!isOwnContact) {
+            await sendMessageToUser(
+              chatId,
+              "Please share your own contact, not someone else's.",
+            );
+            continue;
+          }
+
+          // await UserModel.findOneAndUpdate(
+          //   { telegramChatId: chatId },
+          //   { telegramPhoneNumber: phoneNumber }
+          // );
+
+          await removeReplyKeyboard(
+            chatId,
+            "✅ You're fully linked! You'll receive payment confirmation requests here.",
+          );
+
+          continue;
         }
         /**
          * Check for button click
