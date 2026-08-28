@@ -6,6 +6,7 @@ import axios from "axios";
 import { userModel } from "../models/users";
 import { Request, Response } from "express";
 import BookingController from "./booking.controller";
+import { standardisePhone } from "../utils/standard-tel-format.util";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME; //
 export const generateLinkToken = async (userId: string): Promise<string> => {
@@ -194,7 +195,7 @@ export const startTelegramPolling = async () => {
             telegram_chat_id: chatId,
           });
           if (user) {
-            user.tel = phoneNumber;
+            user.tel = standardisePhone(phoneNumber);
             await user.save();
           }
           // Make sure it's their own contact card, not one they forwarded from someone else
