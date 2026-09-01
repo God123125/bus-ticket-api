@@ -214,15 +214,6 @@ export const startTelegramPolling = async () => {
         if (update.message?.contact) {
           const message = update.message;
           const chatId = message.chat.id;
-          const phoneNumber = message.contact.phone_number;
-          const user = await userModel.findOne({
-            telegram_chat_id: chatId,
-          });
-          if (user) {
-            user.tel = standardisePhone(phoneNumber);
-            await user.save();
-          }
-          // Make sure it's their own contact card, not one they forwarded from someone else
           const isOwnContact = message.contact.user_id === message.from.id;
 
           if (!isOwnContact) {
@@ -232,11 +223,14 @@ export const startTelegramPolling = async () => {
             );
             continue;
           }
-
-          // await UserModel.findOneAndUpdate(
-          //   { telegramChatId: chatId },
-          //   { telegramPhoneNumber: phoneNumber }
-          // );
+          const phoneNumber = message.contact.phone_number;
+          const user = await userModel.findOne({
+            telegram_chat_id: chatId,
+          });
+          if (user) {
+            user.tel = standardisePhone(phoneNumber);
+            await user.save();
+          }
 
           await removeReplyKeyboard(
             chatId,

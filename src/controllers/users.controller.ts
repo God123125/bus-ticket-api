@@ -22,10 +22,9 @@ export const userController = {
       }
       if (req.company) {
         query.company = req.company;
-        query.role = {
-          $or: [{ $ne: RoleEnum.Merchant }, { $ne: RoleEnum.Admin }],
-        };
+        query.role = { $nin: [RoleEnum.Merchant, RoleEnum.Admin] };
       }
+
       const users = await userModel
         .find(query)
         .limit(limit)
