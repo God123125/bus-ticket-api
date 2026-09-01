@@ -123,6 +123,30 @@ export const removeReplyKeyboard = async (
     console.log("Telegram removeReplyKeyboard error:", e);
   }
 };
+export const verifyPayment = async (chatId: string, message: string) => {
+  try {
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
+      chat_id: chatId,
+      text: message,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "✅ Approve",
+              callback_data: "approve_booking",
+            },
+            {
+              text: "❌ Reject",
+              callback_data: "reject_booking",
+            },
+          ],
+        ],
+      },
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
 export const startTelegramPolling = async () => {
   let offset = 0;
 

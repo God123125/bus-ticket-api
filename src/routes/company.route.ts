@@ -109,6 +109,22 @@ const routes: IRoute[] = [
     },
   },
   {
+    path: "/payment/:id",
+    method: "get",
+    authentication: false,
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const data = await CompanyController.getInstance()
+          .getById(id)
+          .select(["-imagePublicId", "-khqrImagePublicId", "khqrImage"]);
+        res.json(data);
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
     path: "/:id",
     method: "patch",
     roles: [RoleEnum.Admin, RoleEnum.Merchant],
