@@ -93,6 +93,7 @@ const routes: IRoute[] = [
   {
     path: "/:id",
     method: "delete",
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
