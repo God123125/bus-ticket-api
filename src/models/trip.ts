@@ -48,8 +48,8 @@ const schema = new Schema<ITrip>(
     booked_seats: [{ type: Schema.Types.String, required: false }],
     status: {
       type: Schema.Types.String,
-      enum: ["active", "inactive"],
-      default: "active",
+      enum: ["ACTIVE", "INACTIVE"],
+      default: "ACTIVE",
     },
     discount: {
       type: Schema.Types.Number,

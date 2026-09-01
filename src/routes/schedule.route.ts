@@ -11,6 +11,7 @@ import {
   upload,
   uploadToCloudinary,
 } from "../config/cloudinary";
+import TripController from "../controllers/trip.controller";
 const routes: IRoute[] = [
   {
     path: "/landing-schedule",
@@ -18,17 +19,19 @@ const routes: IRoute[] = [
     authentication: false,
     handler: async (req: Request, res: Response) => {
       try {
-        const data = await ScheduleController.getInstance()
-          .getMany({})
-          .populate([
-            { path: "departure_station", select: "station_name" },
-            { path: "arrival_station", select: "station_name" },
-            { path: "company", select: ["name", "image"] },
-            { path: "from" },
-            { path: "to" },
-          ])
-          .limit(4)
-          .select("-imagePublicId");
+        // const data = await ScheduleController.getInstance()
+        //   .getMany({})
+        //   .populate([
+        //     { path: "departure_station", select: "station_name" },
+        //     { path: "arrival_station", select: "station_name" },
+        //     { path: "company", select: ["name", "image"] },
+        //     { path: "from" },
+        //     { path: "to" },
+        //   ])
+        //   .limit(4)
+        //   .select("-imagePublicId");
+        const data =
+          await TripController.getInstance().getMostFourPopularSchedule();
         res.json(data);
       } catch (e: any) {
         responseServerError(res, e);

@@ -1,4 +1,5 @@
 import { scheduleModel, ISchedule } from "../models/schedule-destination";
+import { responseServerError } from "../utils/log.util";
 import { Controller } from "./controller";
 export default class ScheduleController extends Controller<ISchedule> {
   private static instance: ScheduleController;

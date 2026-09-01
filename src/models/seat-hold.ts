@@ -40,4 +40,4 @@ const schema = new Schema<ISeatHold>(
   { timestamps: true },
 );
 schema.index({ expireAt: 1 }, { expireAfterSeconds: 0 }); // 5 min after createdAt
-export const seatHoldModel = model<ISeatHold>("seat-holds", schema);
+export const seatHoldModel = model<ISeatHold>("seat_holds", schema);

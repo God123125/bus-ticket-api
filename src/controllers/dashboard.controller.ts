@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { bookingModel } from "../models/booking";
 import BookingController from "./booking.controller";
 import { IPaginationForm } from "../interfaces/pagination";
+import { stationModel } from "../models/station";
 
 export const merchantDashboardController = {
   get_merchant_dashboard: async (req: Request, res: Response) => {
@@ -230,6 +231,25 @@ export const merchantDashboardController = {
         pagination,
       });
       res.json(data);
+    } catch (e: any) {
+      responseServerError(res, e);
+    }
+  },
+  count_property_for_each_company: async (req: Request, res: Response) => {
+    try {
+      const busCount = await busModel.countDocuments({ company: req.company });
+      const stationCount = await stationModel.countDocuments({
+        company: req.company,
+      });
+      const tripCount = await tripModel.countDocuments({
+        company: req.company,
+        status: "ACTIVE",
+      });
+      res.json({
+        busCount,
+        stationCount,
+        tripCount,
+      });
     } catch (e: any) {
       responseServerError(res, e);
     }

@@ -14,6 +14,7 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const companyId = req.body.companyId;
+        const bookingId = req.body.bookingId;
         const owner = await userModel.findOne({
           company: companyId,
           role: RoleEnum.Merchant,
@@ -29,7 +30,7 @@ const routes: IRoute[] = [
             💰 Amount: ${req.body.amount}
             ℹ️ សម្គាល់ៈ សូមឆែកមើលគណនីរបស់អ្នកដើម្បីបញ្ជាក់ការទូទាត់។
         `;
-        await verifyPayment(ownerChatId as string, message);
+        await verifyPayment(ownerChatId as string, message, bookingId);
         res.json({
           msg: "Payment confirmation sent successfully",
           success: true,

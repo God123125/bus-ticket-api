@@ -123,7 +123,11 @@ export const removeReplyKeyboard = async (
     console.log("Telegram removeReplyKeyboard error:", e);
   }
 };
-export const verifyPayment = async (chatId: string, message: string) => {
+export const verifyPayment = async (
+  chatId: string,
+  message: string,
+  bookingId: string,
+) => {
   try {
     await axios.post(`${TELEGRAM_API}/sendMessage`, {
       chat_id: chatId,
@@ -133,11 +137,11 @@ export const verifyPayment = async (chatId: string, message: string) => {
           [
             {
               text: "✅ Approve",
-              callback_data: "approve_booking",
+              callback_data: `approve_booking_${bookingId}`,
             },
             {
               text: "❌ Reject",
-              callback_data: "reject_booking",
+              callback_data: `reject_booking_${bookingId}`,
             },
           ],
         ],

@@ -1,6 +1,7 @@
 import { ObjectId, Types } from "mongoose";
 import { ITrip, tripModel } from "../models/trip";
 import { Controller } from "./controller";
+import { scheduleModel } from "../models/schedule-destination";
 
 export default class TripController extends Controller<ITrip> {
   private static instance: TripController;
@@ -82,7 +83,7 @@ export default class TripController extends Controller<ITrip> {
       { $unwind: { path: "$schedule", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: "seat-holds",
+          from: "seat_holds",
           let: { tripId: "$_id" },
           pipeline: [
             {
@@ -113,5 +114,88 @@ export default class TripController extends Controller<ITrip> {
       },
     ]);
     return trip[0];
+  }
+
+  public async getMostFourPopularSchedule() {
+    const topBooked = await this.model.aggregate([
+      {
+        $lookup: {
+          from: "bookings",
+          localField: "_id",
+          foreignField: "trip",
+          as: "booking_data",
+        },
+      },
+      { $unwind: "$booking_data" }, // NO preserveNullAndEmptyArrays here — only real bookings count
+      {
+        $lookup: {
+          from: "schedule_destinations",
+          localField: "schedule",
+          foreignField: "_id",
+          as: "schedule",
+        },
+      },
+      { $unwind: "$schedule" },
+      {
+        $lookup: {
+          from: "geographics",
+          localField: "schedule.from",
+          foreignField: "_id",
+          as: "from",
+        },
+      },
+      { $unwind: "$from" },
+      {
+        $lookup: {
+          from: "geographics",
+          localField: "schedule.to",
+          foreignField: "_id",
+          as: "to",
+        },
+      },
+      { $unwind: "$to" },
+      {
+        $group: {
+          _id: "$schedule._id",
+          from: { $first: "$from.name" },
+          to: { $first: "$to.name" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 4 },
+    ]);
+
+    if (topBooked.length > 0) {
+      return topBooked;
+    }
+    const randomSchedule = await scheduleModel.aggregate([
+      {
+        $lookup: {
+          from: "geographics",
+          localField: "from",
+          foreignField: "_id",
+          as: "from",
+        },
+      },
+      { $unwind: "$from" },
+      {
+        $lookup: {
+          from: "geographics",
+          localField: "to",
+          foreignField: "_id",
+          as: "to",
+        },
+      },
+      { $unwind: "$to" },
+      {
+        $project: {
+          from: "$from.name",
+          to: "$to.name",
+        },
+      },
+      { $limit: 4 },
+    ]);
+    return randomSchedule;
   }
 }
