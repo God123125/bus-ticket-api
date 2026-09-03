@@ -24,10 +24,10 @@ const routes: IRoute[] = [
     handler: merchantDashboardController.top_performance_destination,
   },
   {
-    path: "/five-recent-booking",
+    path: "/five-recent-bookings",
     method: "get",
     roles: [RoleEnum.Merchant, RoleEnum.Staff, RoleEnum.Admin],
-    handler: merchantDashboardController.five_recent_booking,
+    handler: merchantDashboardController.five_recent_bookings,
   },
 ];
 

@@ -143,8 +143,8 @@ const routes: IRoute[] = [
           company: req.company,
           amenities: parseStringArray(req.body.amenities),
           price_per_seat:
-            Number(req.body.price_per_seat) -
-            Number(req.body.price_per_seat) * Number(req.body.discount ?? 0),
+            req.body.price_per_seat -
+            (req.body.price_per_seat * (req.body.discount ?? 0)) / 100,
         };
         const data = await TripController.getInstance().create(body);
         res.json({

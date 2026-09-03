@@ -7,6 +7,10 @@ import { bookingModel } from "../models/booking";
 import BookingController from "./booking.controller";
 import { IPaginationForm } from "../interfaces/pagination";
 import { stationModel } from "../models/station";
+import { userModel } from "../models/users";
+import { RoleEnum } from "../interfaces/role-enum";
+import { companyModel } from "../models/company";
+import { clientUserModel } from "../models/client-user";
 
 export const merchantDashboardController = {
   get_merchant_dashboard: async (req: Request, res: Response) => {
@@ -210,13 +214,20 @@ export const merchantDashboardController = {
             count: { $sum: 1 },
           },
         },
+        {
+          $project: {
+            _id: 0,
+            booking_status: "$_id",
+            count: 1,
+          },
+        },
       ]);
       res.json(data);
     } catch (e: any) {
       responseServerError(res, e);
     }
   },
-  five_recent_booking: async (req: Request, res: Response) => {
+  five_recent_bookings: async (req: Request, res: Response) => {
     try {
       const company = req.company;
       const pagination: IPaginationForm = {
@@ -229,6 +240,9 @@ export const merchantDashboardController = {
           status: "CONFIRMED",
         },
         pagination,
+        sort: {
+          createdAt: -1,
+        },
       });
       res.json(data);
     } catch (e: any) {
@@ -250,6 +264,88 @@ export const merchantDashboardController = {
         stationCount,
         tripCount,
       });
+    } catch (e: any) {
+      responseServerError(res, e);
+    }
+  },
+  // admin dashboard
+  count_user_and_company: async (req: Request, res: Response) => {
+    try {
+      const userCount = await userModel.countDocuments();
+      const companyCount = await companyModel.countDocuments();
+      const clientUser = await clientUserModel.countDocuments();
+      res.json({
+        userCount,
+        companyCount,
+        clientUser,
+      });
+    } catch (e: any) {
+      responseServerError(res, e);
+    }
+  },
+  company_comparison_doughnut_chart: async (req: Request, res: Response) => {
+    try {
+      const activeCompany = await companyModel.countDocuments({
+        is_active: true,
+      });
+      const inactiveCompany = await companyModel.countDocuments({
+        is_active: false,
+      });
+      res.json({
+        activeCompany,
+        inactiveCompany,
+      });
+    } catch (e: any) {
+      responseServerError(res, e);
+    }
+  },
+  top_booking_company_bar_chart: async (req: Request, res: Response) => {
+    try {
+      const data = await bookingModel.aggregate([
+        {
+          $match: {
+            status: "CONFIRMED",
+          },
+        },
+        {
+          $group: {
+            _id: "$company",
+            count: { $sum: 1 },
+            total_revenue: { $sum: "$total_price" },
+          },
+        },
+        {
+          $lookup: {
+            from: "companies",
+            localField: "company",
+            foreignField: "_id",
+            as: "company_data",
+          },
+        },
+        {
+          $unwind: "$company_data",
+        },
+        {
+          $project: {
+            _id: 0,
+            company: "$company_data",
+            count: 1,
+            total_revenue: 1,
+          },
+        },
+        {
+          $sort: {
+            count: -1,
+          },
+        },
+      ]);
+      res.json(data);
+    } catch (e: any) {
+      responseServerError(res, e);
+    }
+  },
+  monthly_commission_income: async (req: Request, res: Response) => {
+    try {
     } catch (e: any) {
       responseServerError(res, e);
     }
