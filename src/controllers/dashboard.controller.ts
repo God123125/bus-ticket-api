@@ -11,6 +11,7 @@ import { userModel } from "../models/users";
 import { RoleEnum } from "../interfaces/role-enum";
 import { companyModel } from "../models/company";
 import { clientUserModel } from "../models/client-user";
+import { commissionModel } from "../models/commission";
 
 export const merchantDashboardController = {
   get_merchant_dashboard: async (req: Request, res: Response) => {
@@ -344,8 +345,77 @@ export const merchantDashboardController = {
       responseServerError(res, e);
     }
   },
-  monthly_commission_income: async (req: Request, res: Response) => {
+  yearly_commission_income: async (req: Request, res: Response) => {
     try {
+      const year =
+        parseInt(req.query.year as string) || new Date().getFullYear();
+
+      // Start: Jan 1 00:00:00, End: Dec 31 23:59:59 of the target year
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year + 1, 0, 1);
+
+      // Aggregate commission paid by merchants for the selected year
+      const aggregatedData = await commissionModel.aggregate([
+        {
+          $match: {
+            status: "paid",
+            updatedAt: { $gte: startDate, $lt: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: { $month: { date: "$updatedAt", timezone: "+07:00" } }, // Returns 1 to 12
+            total_income: { $sum: "$total_commission" },
+            total_settlements: { $sum: 1 },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ]);
+
+      // Create a lookup map by month number (1 - 12)
+      const dataMap = new Map(
+        aggregatedData.map((item) => [item._id, item.total_income]),
+      );
+
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      // Format for continuous 12-month Line Chart
+      const monthlyData = months.map((monthName, index) => {
+        const monthNumber = index + 1; // 1 to 12
+        return {
+          month: monthName,
+          monthNumber: monthNumber,
+          label: `${monthName} ${year}`,
+          income: dataMap.get(monthNumber) || 0,
+        };
+      });
+
+      res.json({
+        success: true,
+        year: year,
+        // Array of 12 data points
+        data: monthlyData,
+        // Direct arrays if your frontend library (like Chart.js / ApexCharts) prefers separate series/categories
+        chart: {
+          categories: months,
+          series: monthlyData.map((item) => item.income),
+        },
+      });
     } catch (e: any) {
       responseServerError(res, e);
     }
