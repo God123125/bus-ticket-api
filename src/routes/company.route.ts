@@ -117,7 +117,7 @@ const routes: IRoute[] = [
         const id = req.params.id as string;
         const data = await CompanyController.getInstance()
           .getById(id)
-          .select(["-imagePublicId", "-khqrImagePublicId", "khqrImage"]);
+          .select(["-imagePublicId", "-khqrImagePublicId"]);
         res.json(data);
       } catch (e: any) {
         responseServerError(res, e);

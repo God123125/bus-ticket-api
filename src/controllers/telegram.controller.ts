@@ -261,7 +261,6 @@ export const startTelegramPolling = async () => {
             callbackData.startsWith("approve_booking_")
           ) {
             const bookingId = callbackData.replace("approve_booking_", "");
-
             console.log("Approve booking:", bookingId);
 
             await BookingController.getInstance().update(

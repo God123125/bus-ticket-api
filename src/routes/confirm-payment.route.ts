@@ -23,13 +23,7 @@ const routes: IRoute[] = [
           return res.status(404).json({ msg: "Owner not found" });
         }
         const ownerChatId = owner.telegram_chat_id;
-        const message = `
-            🔔 Payment Confirmation
-            👤 Customer Bank Name: ${req.body.bank_acc_name}
-            👤 Customer Bank Account Number: ${req.body.bank_acc_number}
-            💰 Amount: ${req.body.amount}
-            ℹ️ សម្គាល់ៈ សូមឆែកមើលគណនីរបស់អ្នកដើម្បីបញ្ជាក់ការទូទាត់។
-        `;
+        const message = req.body.text;
         await verifyPayment(ownerChatId as string, message, bookingId);
         res.json({
           msg: "Payment confirmation sent successfully",
