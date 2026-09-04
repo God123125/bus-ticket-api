@@ -5,6 +5,7 @@ import { responseServerError } from "../utils/log.util";
 import { userModel } from "../models/users";
 import { RoleEnum } from "../interfaces/role-enum";
 import { verifyPayment } from "../controllers/telegram.controller";
+import BookingController from "../controllers/booking.controller";
 
 const routes: IRoute[] = [
   {
@@ -24,6 +25,8 @@ const routes: IRoute[] = [
         }
         const ownerChatId = owner.telegram_chat_id;
         const message = req.body.text;
+        const bookingData = req.body.booking_data;
+        await BookingController.getInstance().create(bookingData);
         await verifyPayment(ownerChatId as string, message, bookingId);
         res.json({
           msg: "Payment confirmation sent successfully",
