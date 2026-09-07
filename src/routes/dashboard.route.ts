@@ -29,6 +29,37 @@ const routes: IRoute[] = [
     roles: [RoleEnum.Merchant, RoleEnum.Staff, RoleEnum.Admin],
     handler: merchantDashboardController.five_recent_bookings,
   },
+  {
+    path: "/merchant-summary-card",
+    method: "get",
+    roles: [RoleEnum.Merchant, RoleEnum.Staff, RoleEnum.Admin],
+    handler: merchantDashboardController.count_property_for_each_company,
+  },
+  //admin route
+  {
+    path: "/admin-summary-card",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant, RoleEnum.Staff],
+    handler: merchantDashboardController.count_user_and_company,
+  },
+  {
+    path: "/company-comparison",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant, RoleEnum.Staff],
+    handler: merchantDashboardController.company_comparison_doughnut_chart,
+  },
+  {
+    path: "/top-booking-company",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant, RoleEnum.Staff],
+    handler: merchantDashboardController.top_booking_company_bar_chart,
+  },
+  {
+    path: "/yearly-commission",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant, RoleEnum.Staff],
+    handler: merchantDashboardController.yearly_commission_income,
+  },
 ];
 
 export const dashboardRoute = parseToExpressRoute(routes);

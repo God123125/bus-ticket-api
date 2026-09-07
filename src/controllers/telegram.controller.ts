@@ -326,6 +326,7 @@ async function updateBookingStatus(bookingId: string, status: string) {
     }
     booking.status = status;
     await booking.save();
+    // prer $push kor ban dae tae vea ot jab duplicated ber $addToSet add tae data na del ot torn mean knong list te
     await tripModel.updateOne(
       { _id: booking.trip },
       {
