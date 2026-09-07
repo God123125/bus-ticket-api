@@ -7,6 +7,7 @@ import { userModel } from "../models/users";
 import { Request, Response } from "express";
 import BookingController from "./booking.controller";
 import { standardisePhone } from "../utils/standard-tel-format.util";
+import { tripModel } from "../models/trip";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME; //
 export const generateLinkToken = async (userId: string): Promise<string> => {
@@ -263,12 +264,7 @@ export const startTelegramPolling = async () => {
             const bookingId = callbackData.replace("approve_booking_", "");
             console.log("Approve booking:", bookingId);
 
-            await BookingController.getInstance().update(
-              { _id: bookingId },
-              {
-                status: "CONFIRMED",
-              },
-            );
+            await updateBookingStatus(bookingId, "CONFIRMED");
 
             await answerCallbackQuery(callbackQuery.id, "✅ Booking approved!");
 
@@ -292,12 +288,7 @@ export const startTelegramPolling = async () => {
 
             console.log("Reject booking:", bookingId);
 
-            await BookingController.getInstance().update(
-              { _id: bookingId },
-              {
-                status: "REJECTED",
-              },
-            );
+            await updateBookingStatus(bookingId, "REJECTED");
 
             await answerCallbackQuery(callbackQuery.id, "❌ Booking rejected!");
 
@@ -323,3 +314,25 @@ export const startTelegramPolling = async () => {
     }
   }
 };
+async function updateBookingStatus(bookingId: string, status: string) {
+  try {
+    const booking = await BookingController.getInstance().getOne({
+      query: {
+        _id: bookingId,
+      },
+    });
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+    booking.status = status;
+    await booking.save();
+    await tripModel.updateOne(
+      { _id: booking.trip },
+      {
+        $addToSet: { booked_seats: booking.booked_seats },
+      },
+    );
+  } catch (e) {
+    console.log(e);
+  }
+}

@@ -6,6 +6,7 @@ import { userModel } from "../models/users";
 import { RoleEnum } from "../interfaces/role-enum";
 import { verifyPayment } from "../controllers/telegram.controller";
 import BookingController from "../controllers/booking.controller";
+import { IBooking } from "../models/booking";
 
 const routes: IRoute[] = [
   {
@@ -15,7 +16,6 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const companyId = req.body.companyId;
-        const bookingId = req.body.bookingId;
         const owner = await userModel.findOne({
           company: companyId,
           role: RoleEnum.Merchant,
@@ -25,9 +25,22 @@ const routes: IRoute[] = [
         }
         const ownerChatId = owner.telegram_chat_id;
         const message = req.body.text;
-        const bookingData = req.body.booking_data;
-        await BookingController.getInstance().create(bookingData);
-        await verifyPayment(ownerChatId as string, message, bookingId);
+        const bookingData = {
+          user: req.user ?? null,
+          total_price: req.body.payment.totalAmount,
+          booked_seats: req.body.trip.seats,
+          trip: req.body.trip.tripId,
+          user_info: req.body.passenger,
+          company: req.body.companyId,
+        };
+        const booking = (await BookingController.getInstance().create(
+          bookingData,
+        )) as unknown as IBooking;
+        await verifyPayment(
+          ownerChatId as string,
+          message,
+          booking._id as string,
+        );
         res.json({
           msg: "Payment confirmation sent successfully",
           success: true,

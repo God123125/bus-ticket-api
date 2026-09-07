@@ -157,15 +157,17 @@ export default class TripController extends Controller<ITrip> {
       {
         $group: {
           _id: "$schedule._id",
-          from: { $first: "$from.name" },
-          to: { $first: "$to.name" },
-          count: { $sum: 1 },
+          from: { $first: "$from" },
+          to: { $first: "$to" },
+          bookingCount: { $sum: 1 },
+          departure_time: { $first: "$schedule.departure_time" },
+          arrival_time: { $first: "$schedule.arrival_time" },
+          image: { $first: "$schedule.image" },
         },
       },
-      { $sort: { count: -1 } },
+      { $sort: { bookingCount: -1 } },
       { $limit: 4 },
     ]);
-
     if (topBooked.length > 0) {
       return topBooked;
     }
@@ -190,8 +192,7 @@ export default class TripController extends Controller<ITrip> {
       { $unwind: "$to" },
       {
         $project: {
-          from: "$from.name",
-          to: "$to.name",
+          imagePublicId: 0,
         },
       },
       { $limit: 4 },
