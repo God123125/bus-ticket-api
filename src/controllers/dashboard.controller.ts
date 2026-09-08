@@ -123,79 +123,81 @@ export const merchantDashboardController = {
         status: "CONFIRMED",
         company: req.company,
       };
-      const data = await bookingModel.aggregate([
-        {
-          $match: matchFilter,
-        },
-        {
-          $lookup: {
-            from: "trips",
-            localField: "trip",
-            foreignField: "_id",
-            as: "trip_data",
-            pipeline: [
-              {
-                $lookup: {
-                  from: "schedule_destinations",
-                  localField: "schedule",
-                  foreignField: "_id",
-                  as: "schedule_data",
-                  pipeline: [
-                    {
-                      $lookup: {
-                        from: "geographics",
-                        localField: "from",
-                        foreignField: "_id",
-                        as: "from_data",
+      const data = await bookingModel
+        .aggregate([
+          {
+            $match: matchFilter,
+          },
+          {
+            $lookup: {
+              from: "trips",
+              localField: "trip",
+              foreignField: "_id",
+              as: "trip_data",
+              pipeline: [
+                {
+                  $lookup: {
+                    from: "schedule_destinations",
+                    localField: "schedule",
+                    foreignField: "_id",
+                    as: "schedule_data",
+                    pipeline: [
+                      {
+                        $lookup: {
+                          from: "geographics",
+                          localField: "from",
+                          foreignField: "_id",
+                          as: "from_data",
+                        },
                       },
-                    },
-                    {
-                      $lookup: {
-                        from: "geographics",
-                        localField: "to",
-                        foreignField: "_id",
-                        as: "to_data",
+                      {
+                        $lookup: {
+                          from: "geographics",
+                          localField: "to",
+                          foreignField: "_id",
+                          as: "to_data",
+                        },
                       },
-                    },
-                    {
-                      $unwind: {
-                        path: "$from_data",
+                      {
+                        $unwind: {
+                          path: "$from_data",
+                        },
                       },
-                    },
-                    {
-                      $unwind: {
-                        path: "$to_data",
+                      {
+                        $unwind: {
+                          path: "$to_data",
+                        },
                       },
-                    },
-                  ],
+                    ],
+                  },
                 },
-              },
-              {
-                $unwind: {
-                  path: "$schedule_data",
-                  preserveNullAndEmptyArrays: true,
+                {
+                  $unwind: {
+                    path: "$schedule_data",
+                    preserveNullAndEmptyArrays: true,
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-        {
-          $unwind: {
-            path: "$trip_data",
-            preserveNullAndEmptyArrays: true,
+          {
+            $unwind: {
+              path: "$trip_data",
+              preserveNullAndEmptyArrays: true,
+            },
           },
-        },
-        {
-          $group: {
-            _id: "$trip_data.schedule",
-            totalBookings: { $sum: 1 },
-            tripInfo: { $first: "$trip_data.schedule_data" },
+          {
+            $group: {
+              _id: "$trip_data.schedule",
+              totalBookings: { $sum: 1 },
+              tripInfo: { $first: "$trip_data.schedule_data" },
+            },
           },
-        },
-        {
-          $sort: { totalBookings: -1 },
-        },
-      ]);
+          {
+            $sort: { totalBookings: -1 },
+          },
+        ])
+        .allowDiskUse(true);
       res.json(data[0]);
     } catch (e: any) {
       responseServerError(res, e);
