@@ -136,7 +136,7 @@ export const merchantDashboardController = {
             pipeline: [
               {
                 $lookup: {
-                  from: "schedules",
+                  from: "schedule_destinations",
                   localField: "schedule",
                   foreignField: "_id",
                   as: "schedule_data",
@@ -146,7 +146,7 @@ export const merchantDashboardController = {
                         from: "geographics",
                         localField: "from",
                         foreignField: "_id",
-                        as: "from",
+                        as: "from_data",
                       },
                     },
                     {
@@ -154,17 +154,17 @@ export const merchantDashboardController = {
                         from: "geographics",
                         localField: "to",
                         foreignField: "_id",
-                        as: "to",
+                        as: "to_data",
                       },
                     },
                     {
                       $unwind: {
-                        path: "$from",
+                        path: "$from_data",
                       },
                     },
                     {
                       $unwind: {
-                        path: "$to",
+                        path: "$to_data",
                       },
                     },
                   ],
