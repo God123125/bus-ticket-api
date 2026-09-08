@@ -160,13 +160,11 @@ export const merchantDashboardController = {
                     {
                       $unwind: {
                         path: "$from",
-                        preserveNullAndEmptyArrays: true,
                       },
                     },
                     {
                       $unwind: {
                         path: "$to",
-                        preserveNullAndEmptyArrays: true,
                       },
                     },
                   ],
@@ -194,8 +192,11 @@ export const merchantDashboardController = {
             tripInfo: { $first: "$trip_data.schedule_data" },
           },
         },
+        {
+          $sort: { totalBookings: -1 },
+        },
       ]);
-      res.json(data);
+      res.json(data[0]);
     } catch (e: any) {
       responseServerError(res, e);
     }
