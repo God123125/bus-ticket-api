@@ -8,6 +8,8 @@ import { Request, Response } from "express";
 import BookingController from "./booking.controller";
 import { standardisePhone } from "../utils/standard-tel-format.util";
 import { tripModel } from "../models/trip";
+import { commissionModel } from "../models/commission";
+import { companyModel } from "../models/company";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME; //
 export const generateLinkToken = async (userId: string): Promise<string> => {
@@ -333,6 +335,19 @@ async function updateBookingStatus(bookingId: string, status: string) {
         $addToSet: { booked_seats: booking.booked_seats },
       },
     );
+    const company = booking.company
+      ? await companyModel.findById(booking.company)
+      : null;
+
+    if (booking.company) {
+      await commissionModel.create({
+        company: booking.company,
+        total_commission:
+          (booking.total_price * (company?.commission_rate ?? 0)) / 100,
+        trip: booking.trip,
+        status: "PENDING",
+      });
+    }
   } catch (e) {
     console.log(e);
   }
