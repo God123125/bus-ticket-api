@@ -12,6 +12,7 @@ import { RoleEnum } from "../interfaces/role-enum";
 import { companyModel } from "../models/company";
 import { clientUserModel } from "../models/client-user";
 import { commissionModel } from "../models/commission";
+import { scheduleModel } from "../models/schedule-destination";
 
 export const merchantDashboardController = {
   get_merchant_dashboard: async (req: Request, res: Response) => {
@@ -121,20 +122,18 @@ export const merchantDashboardController = {
     try {
       const matchFilter: any = {
         status: "CONFIRMED",
-        company: req.company,
+        company: new mongoose.Types.ObjectId(req.company),
       };
-      const data = await bookingModel
+      // 1. Run your existing aggregation (only returns schedules with bookings)
+      const bookingCounts = await bookingModel
         .aggregate([
-          {
-            $match: matchFilter,
-          },
+          { $match: matchFilter },
           {
             $lookup: {
               from: "trips",
-              localField: "trip",
-              foreignField: "_id",
-              as: "trip_data",
+              let: { tripId: "$trip" },
               pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$tripId"] } } },
                 {
                   $lookup: {
                     from: "schedule_destinations",
@@ -147,7 +146,7 @@ export const merchantDashboardController = {
                           from: "geographics",
                           localField: "from",
                           foreignField: "_id",
-                          as: "from_data",
+                          as: "from",
                         },
                       },
                       {
@@ -155,17 +154,19 @@ export const merchantDashboardController = {
                           from: "geographics",
                           localField: "to",
                           foreignField: "_id",
-                          as: "to_data",
+                          as: "to",
                         },
                       },
                       {
                         $unwind: {
-                          path: "$from_data",
+                          path: "$from",
+                          preserveNullAndEmptyArrays: true,
                         },
                       },
                       {
                         $unwind: {
-                          path: "$to_data",
+                          path: "$to",
+                          preserveNullAndEmptyArrays: true,
                         },
                       },
                     ],
@@ -178,13 +179,11 @@ export const merchantDashboardController = {
                   },
                 },
               ],
+              as: "trip_data",
             },
           },
           {
-            $unwind: {
-              path: "$trip_data",
-              preserveNullAndEmptyArrays: true,
-            },
+            $unwind: { path: "$trip_data", preserveNullAndEmptyArrays: false },
           },
           {
             $group: {
@@ -193,19 +192,36 @@ export const merchantDashboardController = {
               tripInfo: { $first: "$trip_data.schedule_data" },
             },
           },
-          {
-            $sort: { totalBookings: -1 },
-          },
+          { $project: { "tripInfo.imagePublicId": 0 } },
         ])
         .allowDiskUse(true);
-      res.json(data[0]);
+
+      // 2. Fetch ALL schedules (with the same from/to populate), independent of bookings
+      const allSchedules = await scheduleModel
+        .find({ company: req.company })
+        .populate("from")
+        .populate("to")
+        .lean();
+
+      // 3. Merge: every schedule appears, defaulting to 0 bookings
+      const bookingMap = new Map(
+        bookingCounts.map((b: any) => [String(b._id), b.totalBookings]),
+      );
+
+      const result = allSchedules
+        .map((schedule: any) => ({
+          schedule,
+          totalBookings: bookingMap.get(String(schedule._id)) || 0,
+        }))
+        .sort((a: any, b: any) => b.totalBookings - a.totalBookings);
+      res.json(result);
     } catch (e: any) {
       responseServerError(res, e);
     }
   },
   booking_status_distribution: async (req: Request, res: Response) => {
     try {
-      const company = req.company;
+      const company = new mongoose.Types.ObjectId(req.company);
       const data = await bookingModel.aggregate([
         {
           $match: {
@@ -226,7 +242,16 @@ export const merchantDashboardController = {
           },
         },
       ]);
-      res.json(data);
+      const defaultStatuses = ["CONFIRMED", "PENDING", "CANCELLED"];
+
+      const result = defaultStatuses.map((status) => {
+        const found = data.find((d) => d.booking_status === status);
+        return {
+          booking_status: status,
+          count: found ? found.count : 0,
+        };
+      });
+      res.json(result);
     } catch (e: any) {
       responseServerError(res, e);
     }
@@ -238,16 +263,30 @@ export const merchantDashboardController = {
         page: 1,
         limit: 5,
       };
-      const data = await BookingController.getInstance().getMany({
-        query: {
-          company: company,
-          status: "CONFIRMED",
-        },
-        pagination,
-        sort: {
-          createdAt: -1,
-        },
-      });
+      const data = await BookingController.getInstance()
+        .getMany({
+          query: {
+            company: company,
+            status: { $in: ["CONFIRMED", "PENDING"] },
+          },
+          pagination,
+          sort: {
+            createdAt: -1,
+          },
+        })
+        .populate([
+          {
+            path: "trip",
+            select: "schedule",
+            populate: [
+              {
+                path: "schedule",
+                select: "-imagePublicId",
+                populate: [{ path: "from" }, { path: "to" }],
+              },
+            ],
+          },
+        ]);
       res.json(data);
     } catch (e: any) {
       responseServerError(res, e);

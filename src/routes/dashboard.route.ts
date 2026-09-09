@@ -35,6 +35,12 @@ const routes: IRoute[] = [
     roles: [RoleEnum.Merchant, RoleEnum.Staff, RoleEnum.Admin],
     handler: merchantDashboardController.count_property_for_each_company,
   },
+  {
+    path: "/booking-status-distribution",
+    method: "get",
+    roles: [RoleEnum.Merchant, RoleEnum.Staff, RoleEnum.Admin],
+    handler: merchantDashboardController.booking_status_distribution,
+  },
   //admin route
   {
     path: "/admin-summary-card",
