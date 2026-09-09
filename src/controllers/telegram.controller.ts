@@ -319,27 +319,25 @@ export const startTelegramPolling = async () => {
 async function updateBookingStatus(bookingId: string, status: string) {
   try {
     const booking = await BookingController.getInstance().getOne({
-      query: {
-        _id: bookingId,
-      },
+      query: { _id: bookingId },
     });
     if (!booking) {
       throw new Error("Booking not found");
     }
+
+    const previousStatus = booking.status;
+    if (previousStatus === status) return;
+
     booking.status = status;
     await booking.save();
-    // prer $push kor ban dae tae vea ot jab duplicated ber $addToSet add tae data na del ot torn mean knong list te
+
     await tripModel.updateOne(
       { _id: booking.trip },
-      {
-        $addToSet: { booked_seats: booking.booked_seats },
-      },
+      { $addToSet: { booked_seats: { $each: booking.booked_seats } } },
     );
-    const company = booking.company
-      ? await companyModel.findById(booking.company)
-      : null;
 
     if (booking.company) {
+      const company = await companyModel.findById(booking.company);
       await commissionModel.create({
         company: booking.company,
         total_commission:
