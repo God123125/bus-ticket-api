@@ -61,13 +61,20 @@ export const userController = {
       }
       const salt = await bcrypt.genSalt();
       const hash = await bcrypt.hash(req.body.password, salt);
+      const existingUser = await userModel.findById(req.user);
+      let userRole = "";
+      if (existingUser?.role == RoleEnum.Admin) {
+        userRole = RoleEnum.Merchant;
+      } else {
+        userRole = RoleEnum.Staff;
+      }
       const user: IUser = {
         full_name: req.body.full_name ?? "",
         username: req.body.username,
         password: hash,
         profile: url ?? "",
         profilePublicId: publicId ?? "",
-        role: req.body.role ?? RoleEnum.Merchant,
+        role: userRole,
         tel: req.body.tel ?? "",
         address: req.body.address ?? "",
         bank_acc_number: req.body.bank_acc_number ?? "",
