@@ -33,9 +33,7 @@ export const userController = {
         .select(["-profilePublicId", "-password"]);
       res.json({
         list: users,
-        total: await userModel.countDocuments({
-          role: { $ne: RoleEnum.Admin },
-        }),
+        total: await userModel.countDocuments(query),
       });
     } catch (e: any) {
       responseServerError(res, e);
