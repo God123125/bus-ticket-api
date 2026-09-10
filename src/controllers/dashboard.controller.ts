@@ -13,7 +13,8 @@ import { companyModel } from "../models/company";
 import { clientUserModel } from "../models/client-user";
 import { commissionModel } from "../models/commission";
 import { scheduleModel } from "../models/schedule-destination";
-
+import { getFullKhmerDateD, getShortKhmerDate } from "../utils/khmer.util";
+import { start } from "node:repl";
 export const merchantDashboardController = {
   get_merchant_dashboard: async (req: Request, res: Response) => {
     try {
@@ -94,17 +95,30 @@ export const merchantDashboardController = {
       // 4. Fill in missing days with 0 (so chart has continuous X-axis labels)
       const dataMap = new Map(aggregatedData.map((item) => [item._id, item]));
       const chartData = [];
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const dayNames = [
+        "អាទិត្យ",
+        "ចន្ទ",
+        "អង្គារ",
+        "ពុធ",
+        "ព្រហស្បតិ៍",
+        "សុក្រ",
+        "សៅរ៍",
+      ];
       for (let i = 0; i < days; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        const dateStr = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const day = String(currentDate.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+        // const dateStr = getShortKhmerDate(currentDate);
         const dayLabel = dayNames[currentDate.getDay()]; // e.g. 'Fri'
         const existing = dataMap.get(dateStr);
         chartData.push({
           date: dateStr,
           day: dayLabel, // e.g. "Mon", "Fri"
-          label: `${dayLabel} (${dateStr?.slice(5)})`, // e.g. "Fri (08-28)"
+          label: `${dayLabel} (${day}-${month})`, // e.g. "Fri (08-28)"
+          // label: dateStr,
           total_revenue: existing ? existing.total_revenue : 0,
           total_bookings: existing ? existing.total_bookings : 0,
           total_seats_sold: existing ? existing.total_seats_sold : 0,
@@ -259,17 +273,22 @@ export const merchantDashboardController = {
   five_recent_bookings: async (req: Request, res: Response) => {
     try {
       const company = req.company;
-      const pagination: IPaginationForm = {
-        page: 1,
-        limit: 5,
-      };
+      // const pagination: IPaginationForm = {
+      //   page: 1,
+      //   limit: 5,
+      // };
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
       const data = await BookingController.getInstance()
         .getMany({
           query: {
             company: company,
             status: { $in: ["CONFIRMED", "PENDING"] },
+            createdAt: { $gte: startOfDay, $lte: endOfDay },
           },
-          pagination,
           sort: {
             createdAt: -1,
           },
