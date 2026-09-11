@@ -363,42 +363,38 @@ export const merchantDashboardController = {
   },
   top_booking_company_bar_chart: async (req: Request, res: Response) => {
     try {
-      const data = await bookingModel.aggregate([
-        {
-          $match: {
-            status: "CONFIRMED",
-          },
-        },
-        {
-          $group: {
-            _id: "$company",
-            count: { $sum: 1 },
-            total_revenue: { $sum: "$total_price" },
-          },
-        },
+      const data = await companyModel.aggregate([
         {
           $lookup: {
-            from: "companies",
-            localField: "company",
-            foreignField: "_id",
-            as: "company_data",
+            from: "bookings",
+            let: { companyId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$company", "$$companyId"] },
+                  status: "CONFIRMED",
+                },
+              },
+            ],
+            as: "confirmed_bookings",
           },
         },
         {
-          $unwind: "$company_data",
+          $addFields: {
+            booking_count: { $size: "$confirmed_bookings" },
+            total_revenue: { $sum: "$confirmed_bookings.total_price" },
+          },
         },
         {
           $project: {
             _id: 0,
-            company: "$company_data",
-            count: 1,
+            name: 1,
+            booking_count: 1,
             total_revenue: 1,
           },
         },
         {
-          $sort: {
-            count: -1,
-          },
+          $sort: { booking_count: -1 },
         },
       ]);
       res.json(data);
