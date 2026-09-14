@@ -2,72 +2,200 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Telegram Link QR Test</title>
+    <title>Google Sign-In Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       body {
-        font-family: sans-serif;
-        max-width: 420px;
+        font-family:
+          system-ui,
+          -apple-system,
+          Arial,
+          sans-serif;
+        max-width: 600px;
         margin: 60px auto;
-        text-align: center;
+        padding: 0 20px;
+        color: #202124;
       }
-      img {
-        border: 1px solid #ccc;
-        margin-top: 16px;
+      h1 {
+        font-size: 20px;
       }
-      input,
-      button {
+      #client-id-input {
+        width: 100%;
         padding: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
         font-size: 14px;
       }
-      #status {
-        margin-top: 12px;
-        color: #555;
+      label {
+        font-size: 13px;
+        color: #5f6368;
+      }
+      #g_id_signin_container {
+        margin: 20px 0;
+      }
+      #result {
+        margin-top: 24px;
+        padding: 16px;
+        background: #f1f3f4;
+        border-radius: 8px;
+        display: none;
+      }
+      #result.show {
+        display: block;
+      }
+      #result pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 12px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .field {
+        margin-bottom: 8px;
+      }
+      .field b {
+        display: inline-block;
+        width: 90px;
+      }
+      #backend-test {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #dadce0;
+      }
+      #backend-url {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        font-size: 14px;
+        margin: 8px 0;
+      }
+      button {
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      #backend-result {
+        margin-top: 10px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-all;
       }
     </style>
   </head>
   <body>
-    <h2>Telegram Link QR Test</h2>
+    <h1>Google Sign-In Test Page</h1>
 
+    <label for="client-id-input">Google Client ID</label>
     <input
-      id="userId"
+      id="client-id-input"
       type="text"
-      placeholder="Enter userId"
-      value="TEST_USER_123"
+      placeholder="xxxxx.apps.googleusercontent.com"
     />
-    <button id="generateBtn">Generate QR</button>
 
-    <div id="status"></div>
-    <img id="qrImage" style="display: none" width="300" height="300" />
+    <div id="g_id_signin_container">
+      <p style="color: #5f6368; font-size: 13px">
+        Enter your Client ID above, then click "Load button".
+      </p>
+      <button onclick="loadGoogleButton()">Load button</button>
+    </div>
+
+    <div id="result">
+      <h3 style="margin-top: 0">Decoded ID Token</h3>
+      <div class="field"><b>Name:</b> <span id="r-name"></span></div>
+      <div class="field"><b>Email:</b> <span id="r-email"></span></div>
+      <div class="field"><b>Google ID:</b> <span id="r-sub"></span></div>
+      <div class="field"><b>Picture:</b> <span id="r-picture"></span></div>
+      <img
+        id="r-picture-img"
+        style="border-radius: 50%; width: 48px; margin-top: 8px"
+      />
+      <h4>Raw ID Token (send this to your backend)</h4>
+      <pre id="r-token"></pre>
+
+      <div id="backend-test">
+        <label for="backend-url"
+          >Backend endpoint (e.g. http://localhost:3000/auth/google)</label
+        >
+        <input
+          id="backend-url"
+          type="text"
+          placeholder="http://localhost:3000/auth/google"
+        />
+        <button onclick="sendToBackend()">Send token to backend</button>
+        <div id="backend-result"></div>
+      </div>
+    </div>
 
     <script>
-      // Point this at your local backend
-      const API_BASE = "http://localhost:3000/api/telegram";
+      let currentIdToken = null;
 
-      const generateBtn = document.getElementById("generateBtn");
-      const userIdInput = document.getElementById("userId");
-      const qrImage = document.getElementById("qrImage");
-      const status = document.getElementById("status");
-
-      generateBtn.addEventListener("click", async () => {
-        const userId = userIdInput.value.trim();
-        if (!userId) return;
-
-        status.textContent = "Generating...";
-        qrImage.style.display = "none";
-
-        try {
-          const res = await fetch(`${API_BASE}/link-qr/${userId}`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-          const data = await res.json();
-          qrImage.src = data.qrDataUrl; // already a base64 data URL — assign directly
-          qrImage.style.display = "block";
-          status.textContent = `Scan with Telegram. Expires in ${data.expiresInMinutes} min.`;
-        } catch (err) {
-          status.textContent = "Error: " + err.message;
-          console.error(err);
+      function loadGoogleButton() {
+        const clientId = document
+          .getElementById("client-id-input")
+          .value.trim();
+        if (!clientId) {
+          alert("Please enter your Google Client ID first.");
+          return;
         }
-      });
+
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse,
+        });
+
+        document.getElementById("g_id_signin_container").innerHTML = "";
+        google.accounts.id.renderButton(
+          document.getElementById("g_id_signin_container"),
+          { theme: "outline", size: "large" },
+        );
+      }
+
+      function handleCredentialResponse(response) {
+        currentIdToken = response.credential;
+
+        // Decode JWT payload (for display only — real verification must happen on the backend)
+        const payload = JSON.parse(atob(response.credential.split(".")[1]));
+
+        document.getElementById("r-name").textContent = payload.name;
+        document.getElementById("r-email").textContent = payload.email;
+        document.getElementById("r-sub").textContent = payload.sub;
+        document.getElementById("r-picture").textContent = payload.picture;
+        document.getElementById("r-picture-img").src = payload.picture;
+        document.getElementById("r-token").textContent = response.credential;
+
+        document.getElementById("result").classList.add("show");
+      }
+
+      async function sendToBackend() {
+        const url = document.getElementById("backend-url").value.trim();
+        const resultEl = document.getElementById("backend-result");
+
+        if (!url) {
+          alert("Enter your backend endpoint URL.");
+          return;
+        }
+        if (!currentIdToken) {
+          alert("Sign in with Google first.");
+          return;
+        }
+
+        resultEl.textContent = "Sending...";
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken: currentIdToken }),
+          });
+          const data = await res.json();
+          resultEl.textContent =
+            "Response (" + res.status + "):\n" + JSON.stringify(data, null, 2);
+        } catch (err) {
+          resultEl.textContent = "Error: " + err.message;
+        }
+      }
     </script>
   </body>
 </html>
