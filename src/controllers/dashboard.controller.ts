@@ -333,7 +333,9 @@ export const merchantDashboardController = {
   // admin dashboard
   count_user_and_company: async (req: Request, res: Response) => {
     try {
-      const userCount = await userModel.countDocuments();
+      const userCount = await userModel.countDocuments({
+        role: { $ne: RoleEnum.Admin },
+      });
       const companyCount = await companyModel.countDocuments();
       const clientUser = await clientUserModel.countDocuments();
       res.json({
