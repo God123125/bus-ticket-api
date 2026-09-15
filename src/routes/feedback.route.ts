@@ -5,7 +5,11 @@ import FeedbackController from "../controllers/feedback.controller";
 import { Request, Response } from "express";
 import { responseServerError } from "../utils/log.util";
 import { IPaginationForm } from "../interfaces/pagination";
-import { upload, uploadToCloudinary } from "../config/cloudinary";
+import {
+  deleteFromCloudinary,
+  upload,
+  uploadToCloudinary,
+} from "../config/cloudinary";
 
 const routes: IRoute[] = [
   {
@@ -79,9 +83,12 @@ const routes: IRoute[] = [
             msg: "Feedback not found!",
           });
         }
-        let imageUrl = feedback.image;
-        let imagePublicId = feedback.imagePublicId;
+        let imageUrl = "";
+        let imagePublicId = "";
         if (req.file) {
+          if (feedback.imagePublicId) {
+            await deleteFromCloudinary(feedback.imagePublicId);
+          }
           const image = await uploadToCloudinary(req.file.buffer, "feedbacks");
           imageUrl = image.url;
           imagePublicId = image.publicId;
@@ -115,6 +122,9 @@ const routes: IRoute[] = [
           return res.status(404).json({
             msg: "Feedback not found!",
           });
+        }
+        if (feedback.imagePublicId) {
+          await deleteFromCloudinary(feedback.imagePublicId);
         }
         const data = await FeedbackController.getInstance().delete({
           _id: id as string,
