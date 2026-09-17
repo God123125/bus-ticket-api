@@ -267,7 +267,7 @@ export const merchantDashboardController = {
       responseServerError(res, e);
     }
   },
-  five_recent_bookings: async (req: Request, res: Response) => {
+  recent_bookings: async (req: Request, res: Response) => {
     try {
       const company = req.company;
       // const pagination: IPaginationForm = {

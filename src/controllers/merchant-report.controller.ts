@@ -1,19 +1,40 @@
 import { Request, Response } from "express";
 import { responseServerError } from "../utils/log.util";
 import BookingController from "./booking.controller";
+import mongoose from "mongoose";
 
 export const merchantReportController = {
   booking_report: async (req: Request, res: Response) => {
     try {
       const companyId = req.company;
-      const data = await BookingController.getInstance().getMany({
-        query: {
-          company: companyId,
-        },
-        sort: {
-          createdAt: -1,
-        },
-      });
+      const data = await BookingController.getInstance()
+        .getMany({
+          query: {
+            company: companyId,
+          },
+          sort: {
+            createdAt: -1,
+          },
+        })
+        .populate([
+          {
+            path: "trip",
+            select: "schedule",
+            populate: [
+              {
+                path: "schedule",
+                select: [
+                  "from",
+                  "to",
+                  "image",
+                  "arrival_time",
+                  "departure_time",
+                ],
+                populate: [{ path: "from" }, { path: "to" }],
+              },
+            ],
+          },
+        ]);
       const pendingBookingCount = await BookingController.getInstance().count({
         company: companyId,
         status: "PENDING",
@@ -41,13 +62,13 @@ export const merchantReportController = {
         await BookingController.getInstance().aggregate([
           {
             $match: {
-              company: companyId,
+              company: new mongoose.Types.ObjectId(companyId),
             },
           },
           {
             $group: {
               _id: null,
-              totalAmount: { $sum: "$totalAmount" },
+              totalAmount: { $sum: "$total_price" },
             },
           },
         ]);
@@ -58,8 +79,7 @@ export const merchantReportController = {
         cancelledBookingCount,
         refundedBookingCount,
         totalBookingCount,
-        totalBookingAmount,
-        success: true,
+        totalBookingAmount: (totalBookingAmount[0] as any)?.totalAmount,
       });
     } catch (e: any) {
       responseServerError(res, e);
