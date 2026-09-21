@@ -2,13 +2,19 @@ import { Request, Response } from "express";
 import { responseServerError } from "../utils/log.util";
 import BookingController from "./booking.controller";
 import mongoose from "mongoose";
+import { IPaginationForm } from "../interfaces/pagination";
 
 export const merchantReportController = {
   booking_report: async (req: Request, res: Response) => {
     try {
       const companyId = req.company;
+      const pagination: IPaginationForm = {
+        page: req.query.page ? Number(req.query.page) : 1,
+        limit: req.query.limit ? Number(req.query.limit) : 10,
+      };
       const data = await BookingController.getInstance()
         .getMany({
+          pagination,
           query: {
             company: companyId,
           },
@@ -34,7 +40,8 @@ export const merchantReportController = {
               },
             ],
           },
-        ]);
+        ])
+        .sort({ createdAt: -1 });
       const pendingBookingCount = await BookingController.getInstance().count({
         company: companyId,
         status: "PENDING",
