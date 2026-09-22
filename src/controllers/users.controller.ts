@@ -153,6 +153,7 @@ export const userController = {
       const userResponse = {
         username: user.username,
         role: user.role,
+        profile: user.profile,
         company_image: companyData?.image,
         company_name: companyData?.name,
         company_color: companyData?.color,

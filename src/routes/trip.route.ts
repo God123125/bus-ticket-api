@@ -234,7 +234,8 @@ const routes: IRoute[] = [
           amenities: parseStringArray(req.body.amenities),
           price_per_seat:
             Number(req.body.price_per_seat) -
-            Number(req.body.price_per_seat) * Number(req.body.discount ?? 0),
+            (Number(req.body.price_per_seat) * Number(req.body.discount ?? 0)) /
+              100,
         };
 
         const data = await TripController.getInstance().update(
