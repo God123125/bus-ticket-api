@@ -98,8 +98,14 @@ const routes: IRoute[] = [
         const booking = await BookingController.getInstance().getById(id);
         if (!booking)
           return res.status(404).json({ msg: "Booking not found!" });
+        const refundRate = req.body.refund_rate;
+        const calculateTotalPrice =
+          booking.total_price - (booking.total_price * refundRate) / 100;
         const body: Partial<IBooking> = {
           ...req.body,
+          refunded_amount: calculateTotalPrice,
+          is_refunded: true,
+          refund_rate: refundRate,
           ...(req.user ? { user: req.user } : {}),
         };
         const data = await BookingController.getInstance().update(

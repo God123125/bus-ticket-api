@@ -10,6 +10,9 @@ export interface IBooking extends IMongoObject {
   status?: string;
   user_info?: any;
   company?: string | ObjectId;
+  refund_rate?: number;
+  is_refunded: boolean;
+  refunded_amount: number;
 }
 const schema = new Schema<IBooking>(
   {
@@ -32,6 +35,9 @@ const schema = new Schema<IBooking>(
       ref: "companies",
       required: false,
     },
+    is_refunded: { type: Schema.Types.Boolean, default: false },
+    refund_rate: { type: Schema.Types.Number, required: false },
+    refunded_amount: { type: Schema.Types.Number, required: false, default: 0 },
   },
   { timestamps: true },
 );
