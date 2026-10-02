@@ -20,7 +20,7 @@ const schema: Schema<ICommission> = new Schema<ICommission>(
       required: true,
     },
     total_commission: { type: Schema.Types.Number, required: true },
-    status: { type: Schema.Types.String, required: false, default: "pending" },
+    status: { type: Schema.Types.String, required: false, default: "PENDING" },
   },
   { timestamps: true },
 );

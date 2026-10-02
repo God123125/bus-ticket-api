@@ -253,7 +253,7 @@ export const merchantDashboardController = {
           },
         },
       ]);
-      const defaultStatuses = ["CONFIRMED", "PENDING", "CANCELLED"];
+      const defaultStatuses = ["CONFIRMED", "PENDING", "REFUNDED"];
 
       const result = defaultStatuses.map((status) => {
         const found = data.find((d) => d.booking_status === status);
