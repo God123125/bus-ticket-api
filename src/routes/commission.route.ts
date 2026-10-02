@@ -13,11 +13,14 @@ const routes: IRoute[] = [
     roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
+        const date = req.query.date || new Date();
         const data =
-          await CommissionController.getInstance().getCommissionByCompany();
+          await CommissionController.getInstance().getCommissionByCompany(
+            date as Date,
+          );
         return res.status(200).json({
           msg: "Commission fetched successfully!",
-          data: data,
+          list: data,
         });
       } catch (e: any) {
         responseServerError(res, e);

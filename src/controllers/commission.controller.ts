@@ -13,14 +13,22 @@ export default class CommissionController extends Controller<ICommission> {
     return CommissionController.instance;
   }
 
-  getCommissionByCompany() {
+  getCommissionByCompany(date: Date) {
+    // Shift to Phnom Penh time to read the correct year/month
+    const local = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+    const year = local.getUTCFullYear();
+    const month = local.getUTCMonth(); // 0-based
+
+    // 00:00 local time = 17:00 UTC of the previous day, hence the -7
+    const start = new Date(Date.UTC(year, month, 1, -7));
+    const end = new Date(Date.UTC(year, month + 1, 1, -7));
+
     return this.aggregate([
+      { $match: { createdAt: { $gte: start, $lt: end } } },
       {
         $group: {
           _id: "$company",
-          total_commission: {
-            $sum: "$total_commission",
-          },
+          total_commission: { $sum: "$total_commission" },
         },
       },
       {
@@ -39,12 +47,22 @@ export default class CommissionController extends Controller<ICommission> {
               },
             },
             { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                name: 1,
+                image: 1,
+                owner: {
+                  profile: "$owner.profile",
+                  full_name: "$owner.full_name",
+                  username: "$owner.username",
+                  tel: "$owner.tel",
+                },
+              },
+            },
           ],
         },
       },
-      {
-        $unwind: "$company",
-      },
+      { $unwind: "$company" },
       {
         $project: {
           _id: 0,
@@ -52,9 +70,9 @@ export default class CommissionController extends Controller<ICommission> {
           company_image: "$company.image",
           company_owner: "$company.owner",
           total_commission: 1,
-          status: "$status",
         },
       },
+      { $sort: { company_name: 1 } },
     ]);
   }
 }
