@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import { RoleEnum } from "../interfaces/role-enum";
 import { IRoute } from "../interfaces/route";
 import { parseToExpressRoute } from "../utils/route.util";
@@ -18,6 +18,30 @@ const routes: IRoute[] = [
         return res.status(200).json({
           msg: "Commission fetched successfully!",
           data: data,
+        });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/status-count",
+    method: "get",
+    roles: [RoleEnum.Admin],
+    handler: async (req: Request, res: Response) => {
+      try {
+        const paid = await CommissionController.getInstance().count({
+          status: "PAID",
+        });
+        const pending = await CommissionController.getInstance().count({
+          status: "PENDING",
+        });
+        return res.status(200).json({
+          msg: "Commission status fetched successfully!",
+          data: {
+            paid,
+            pending,
+          },
         });
       } catch (e: any) {
         responseServerError(res, e);

@@ -29,6 +29,17 @@ export default class CommissionController extends Controller<ICommission> {
           localField: "_id",
           foreignField: "_id",
           as: "company",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+              },
+            },
+            { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+          ],
         },
       },
       {
@@ -37,8 +48,11 @@ export default class CommissionController extends Controller<ICommission> {
       {
         $project: {
           _id: 0,
-          company: "$company",
+          company_name: "$company.name",
+          company_image: "$company.image",
+          company_owner: "$company.owner",
           total_commission: 1,
+          status: "$status",
         },
       },
     ]);
