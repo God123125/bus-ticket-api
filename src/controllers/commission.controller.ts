@@ -13,7 +13,11 @@ export default class CommissionController extends Controller<ICommission> {
     return CommissionController.instance;
   }
 
-  getCommissionByCompany(date: Date) {
+  async getCommissionByCompany(
+    date: Date,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     // Shift to Phnom Penh time to read the correct year/month
     const local = new Date(date.getTime() + 7 * 60 * 60 * 1000);
     const year = local.getUTCFullYear();
@@ -22,8 +26,8 @@ export default class CommissionController extends Controller<ICommission> {
     // 00:00 local time = 17:00 UTC of the previous day, hence the -7
     const start = new Date(Date.UTC(year, month, 1, -7));
     const end = new Date(Date.UTC(year, month + 1, 1, -7));
-
-    return this.aggregate([
+    const skip = (page - 1) * limit;
+    const storeAggregateData: any = await this.aggregate([
       { $match: { createdAt: { $gte: start, $lt: end } } },
       {
         $group: {
@@ -75,7 +79,16 @@ export default class CommissionController extends Controller<ICommission> {
         },
       },
       { $sort: { company_name: 1 } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          meta: [{ $count: "total" }],
+        },
+      },
     ]);
+    const data = storeAggregateData[0]?.data || [];
+    const total = storeAggregateData[0]?.meta[0]?.total || 0;
+    return { list: data, total };
   }
 
   getMonthRange(date: Date) {

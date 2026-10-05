@@ -14,13 +14,17 @@ const routes: IRoute[] = [
     handler: async (req: Request, res: Response) => {
       try {
         const date = req.query.date || new Date();
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
         const data =
           await CommissionController.getInstance().getCommissionByCompany(
             new Date(date as string),
+            page,
+            limit,
           );
         return res.status(200).json({
           msg: "Commission fetched successfully!",
-          list: data,
+          ...data,
         });
       } catch (e: any) {
         responseServerError(res, e);
