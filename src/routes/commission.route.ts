@@ -63,14 +63,18 @@ const routes: IRoute[] = [
     },
   },
   {
-    path: "/mark-paid",
+    path: "/mark-as-paid",
     method: "post",
     roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const date = req.body.date || new Date();
+        const company = req.body.company;
+        if (!company) {
+          throw new Error("Company not found!");
+        }
         const data = await CommissionController.getInstance().markMonthAsPaid(
-          req.company,
+          company,
           date as Date,
         );
         return res.status(200).json({

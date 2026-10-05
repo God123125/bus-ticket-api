@@ -70,7 +70,7 @@ export default class CommissionController extends Controller<ICommission> {
       { $unwind: "$company" },
       {
         $project: {
-          _id: 0,
+          _id: 1,
           company_name: "$company.name",
           company_image: "$company.image",
           company_owner: "$company.owner",
@@ -91,7 +91,12 @@ export default class CommissionController extends Controller<ICommission> {
     return { list: data, total };
   }
 
-  getMonthRange(date: Date) {
+  getMonthRange(input: Date | string | number) {
+    const date = input instanceof Date ? input : new Date(input);
+    if (isNaN(date.getTime())) {
+      throw new Error(`Invalid date: ${input}`);
+    }
+
     const PP_OFFSET = 7 * 60 * 60 * 1000;
     const local = new Date(date.getTime() + PP_OFFSET);
     const year = local.getUTCFullYear();
