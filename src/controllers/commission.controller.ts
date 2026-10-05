@@ -29,6 +29,7 @@ export default class CommissionController extends Controller<ICommission> {
         $group: {
           _id: "$company",
           total_commission: { $sum: "$total_commission" },
+          status: { $first: "$status" },
         },
       },
       {
@@ -69,10 +70,40 @@ export default class CommissionController extends Controller<ICommission> {
           company_name: "$company.name",
           company_image: "$company.image",
           company_owner: "$company.owner",
+          status: 1,
           total_commission: 1,
         },
       },
       { $sort: { company_name: 1 } },
     ]);
+  }
+
+  getMonthRange(date: Date) {
+    const PP_OFFSET = 7 * 60 * 60 * 1000;
+    const local = new Date(date.getTime() + PP_OFFSET);
+    const year = local.getUTCFullYear();
+    const month = local.getUTCMonth();
+    return {
+      start: new Date(Date.UTC(year, month, 1, -7)),
+      end: new Date(Date.UTC(year, month + 1, 1, -7)),
+    };
+  }
+  async markMonthAsPaid(companyId: string, date: Date) {
+    const { start, end } = this.getMonthRange(date);
+    const result = await this.updateMany(
+      {
+        company: companyId,
+        createdAt: { $gte: start, $lt: end },
+        status: { $ne: "PAID" }, // skip already paid
+      },
+      {
+        $set: {
+          status: "PAID",
+          paid_at: new Date(),
+        },
+      },
+    );
+
+    return { matched: result.matchedCount, updated: result.modifiedCount };
   }
 }
