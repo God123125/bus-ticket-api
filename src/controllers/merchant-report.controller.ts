@@ -70,6 +70,7 @@ export const merchantReportController = {
           {
             $match: {
               company: new mongoose.Types.ObjectId(companyId),
+              status: "CONFIRMED",
             },
           },
           {
