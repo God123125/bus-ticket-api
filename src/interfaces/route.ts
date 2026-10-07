@@ -5,7 +5,7 @@ export interface IRoute {
   path: string;
   method: "get" | "post" | "patch" | "delete";
   roles?: RoleEnum[];
-  authentication?: boolean;
+  authentication?: boolean | "optional";
   required_company?: boolean;
   middleware?: Handler | Handler[];
   handler: Handler;

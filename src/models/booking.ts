@@ -3,6 +3,7 @@ import { clientUserModel } from "./client-user";
 import { IMongoObject } from "../interfaces/mongo-object";
 import { tripModel } from "./trip";
 export interface IBooking extends IMongoObject {
+  booking_code?: string;
   user?: string | ObjectId;
   total_price: number;
   booked_seats: string[];
@@ -11,8 +12,9 @@ export interface IBooking extends IMongoObject {
   user_info?: any;
   company?: string | ObjectId;
   refund_rate?: number;
-  is_refunded: boolean;
-  refunded_amount: number;
+  is_refunded?: boolean;
+  refunded_amount?: number;
+  accessTokenHash?: string;
 }
 const schema = new Schema<IBooking>(
   {
@@ -38,6 +40,12 @@ const schema = new Schema<IBooking>(
     is_refunded: { type: Schema.Types.Boolean, default: false },
     refund_rate: { type: Schema.Types.Number, required: false },
     refunded_amount: { type: Schema.Types.Number, required: false, default: 0 },
+    accessTokenHash: {
+      type: Schema.Types.String,
+      required: false,
+      select: false,
+    },
+    booking_code: { type: Schema.Types.String, unique: true },
   },
   { timestamps: true },
 );

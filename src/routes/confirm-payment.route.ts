@@ -7,12 +7,13 @@ import { RoleEnum } from "../interfaces/role-enum";
 import { verifyPayment } from "../controllers/telegram.controller";
 import BookingController from "../controllers/booking.controller";
 import { IBooking } from "../models/booking";
-
+import crypto from "crypto";
+import { sha256 } from "../middleware/hash-token";
 const routes: IRoute[] = [
   {
     path: "/",
     method: "post",
-    authentication: false,
+    authentication: "optional",
     handler: async (req: Request, res: Response) => {
       try {
         const companyId = req.body.companyId;
@@ -25,14 +26,20 @@ const routes: IRoute[] = [
         }
         const ownerChatId = owner.telegram_chat_id;
         const message = req.body.text;
-        const bookingData = {
-          user: req.user ?? null,
+        const token = crypto.randomBytes(24).toString("hex");
+        const bookingData: any = {
           total_price: req.body.payment.totalAmount,
           booked_seats: req.body.trip.seats,
           trip: req.body.trip.tripId,
           user_info: req.body.passenger,
           company: req.body.companyId,
+          booking_code: req.body.booking_code,
         };
+        if (req.user) {
+          bookingData.user = req.user;
+        } else {
+          bookingData.accessTokenHash = sha256(token);
+        }
         const booking = (await BookingController.getInstance().create(
           bookingData,
         )) as unknown as IBooking;
@@ -43,6 +50,7 @@ const routes: IRoute[] = [
         );
         res.json({
           msg: "Payment confirmation sent successfully",
+          access_token: sha256(token),
           success: true,
         });
       } catch (e: any) {

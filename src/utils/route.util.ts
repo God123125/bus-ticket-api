@@ -19,8 +19,10 @@ export const parseToExpressRoute = (
       handler,
     } = route;
     let middleware: Handler[] = [];
-    if (authentication) {
+    if (authentication === true) {
       middleware.push(AuthHandlers.requiredAuth);
+    } else if (authentication === "optional") {
+      middleware.push(AuthHandlers.optionalAuth);
     } else if (authentication === false) {
       middleware.push(AuthHandlers.notRequiredAuth);
     }

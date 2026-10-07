@@ -19,6 +19,24 @@ export default class AuthHandlers {
     req.requiredAuth = false;
     return next();
   }
+  public static optionalAuth(req: Request, res: Response, next: NextFunction) {
+    req.requiredAuth = false;
+    const token = req.header("Authorization")?.split(" ")[1];
+    if (!token) return next(); // guest
+
+    const secret = process.env.JWT_KEY;
+    if (!secret)
+      return res.status(500).json({ message: "Server auth misconfigured" });
+
+    try {
+      const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
+      req.user = decoded.user;
+      req.company = decoded.company || "";
+      return next();
+    } catch {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+  }
   public static async authentication(
     req: Request,
     res: Response,

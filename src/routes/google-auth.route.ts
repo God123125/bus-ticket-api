@@ -11,7 +11,7 @@ const router = Router();
 router.post("/auth", async (req: Request, res: Response) => {
   const { idToken } = req.body;
   const payload = (await verifyGoogleToken(idToken)) as unknown as TokenPayload;
-
+  const secret = process.env.JWT_KEY;
   let user = await clientUserModel.findOne({ email: payload.email! });
   if (!user) {
     user = await clientUserModel.create({
@@ -22,7 +22,7 @@ router.post("/auth", async (req: Request, res: Response) => {
     });
   }
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY!, {
+  const token = jwt.sign({ user: user._id }, secret!, {
     expiresIn: "7d",
   });
   res.json({ token, user });
