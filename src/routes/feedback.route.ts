@@ -26,14 +26,41 @@ const routes: IRoute[] = [
         if (req.company) {
           query.company = req.company;
         }
-        const data = await FeedbackController.getInstance().getMany({
-          pagination,
-          query,
-        });
+        if (req.query.star) {
+          query.star = req.query.star;
+        }
+        const data = await FeedbackController.getInstance()
+          .getMany({
+            pagination,
+            query,
+          })
+          .populate([{ path: "company", select: ["name", "image"] }])
+          .select("-imagePublicId");
         return res.status(200).json({
           msg: "Feedback fetched successfully!",
-          data: data,
+          list: data,
+          total: data.length,
         });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/summary",
+    method: "get",
+    roles: [RoleEnum.Admin, RoleEnum.Merchant],
+    handler: async (req: Request, res: Response) => {
+      try {
+        let company = "";
+        if (req.company) {
+          company = req.company;
+        }
+        const data =
+          await FeedbackController.getInstance().getFeedbackSummaryCard(
+            company,
+          );
+        return res.status(200).json(data);
       } catch (e: any) {
         responseServerError(res, e);
       }
