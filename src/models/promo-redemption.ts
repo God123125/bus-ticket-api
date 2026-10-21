@@ -4,7 +4,6 @@ import { IMongoObject } from "../interfaces/mongo-object";
 export interface IPromoRedemption extends IMongoObject {
   promo_code: Types.ObjectId;
   user: Types.ObjectId;
-  booking: Types.ObjectId;
   useCount: number;
 }
 const schema = new Schema<IPromoRedemption>(
@@ -15,7 +14,6 @@ const schema = new Schema<IPromoRedemption>(
       required: true,
     },
     user: { type: Schema.Types.ObjectId, ref: "users", required: true },
-    booking: { type: Schema.Types.ObjectId, ref: "bookings", required: true },
     useCount: { type: Number, required: true, default: 1 },
   },
   { timestamps: true },

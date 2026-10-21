@@ -87,7 +87,6 @@ const routes: IRoute[] = [
               await promoRedemptionModel.create({
                 promo_code: new Types.ObjectId(promoCode._id as string),
                 user: new Types.ObjectId(req.user as string),
-                booking: new Types.ObjectId(booking._id as string),
                 useCount: 1,
               });
             } else {
