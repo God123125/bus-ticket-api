@@ -9,6 +9,11 @@ import BookingController from "../controllers/booking.controller";
 import { IBooking } from "../models/booking";
 import crypto from "crypto";
 import { sha256 } from "../middleware/hash-token";
+import PromoCodeController from "../controllers/promo-code.controller";
+import { promoRedemptionModel } from "../models/promo-redemption";
+import { Types } from "mongoose";
+import { DiscountTypeEnum } from "../interfaces/discount-type-enum";
+import { tripModel } from "../models/trip";
 const routes: IRoute[] = [
   {
     path: "/",
@@ -16,7 +21,10 @@ const routes: IRoute[] = [
     authentication: "optional",
     handler: async (req: Request, res: Response) => {
       try {
-        const companyId = req.body.companyId;
+        const { companyId, booking_code, passenger, promo_id } = req.body;
+        const trip = req.body.trip;
+        const payment = req.body.payment;
+        let finalPrice = payment.totalAmount;
         const owner = await userModel.findOne({
           company: companyId,
           role: RoleEnum.Merchant,
@@ -27,22 +35,89 @@ const routes: IRoute[] = [
         const ownerChatId = owner.telegram_chat_id;
         const message = req.body.text;
         const token = crypto.randomBytes(24).toString("hex");
+        const tripData = await tripModel.findById(trip?.tripId);
+        if (!tripData) return res.status(404).json({ msg: "Trip not found" });
+
+        if (promo_id) {
+          if (!req.user)
+            return res
+              .status(400)
+              .json({ msg: "Login required to use a promo code" });
+
+          const promoCode = await PromoCodeController.getInstance().getOne({
+            query: { _id: promo_id },
+          });
+          if (!promoCode)
+            return res.status(400).json({ msg: "Promo code not found" });
+          finalPrice =
+            promoCode.discountType === DiscountTypeEnum.PERCENTAGE
+              ? finalPrice * (1 - promoCode.value / 100)
+              : finalPrice - promoCode.value;
+          const promoRedemption = await promoRedemptionModel.findOne({
+            promo_code: new Types.ObjectId(promoCode._id as string),
+            user: req.user,
+          });
+        }
         const bookingData: any = {
-          total_price: req.body.payment.totalAmount,
-          booked_seats: req.body.trip.seats,
-          trip: req.body.trip.tripId,
-          user_info: req.body.passenger,
-          company: req.body.companyId,
-          booking_code: req.body.booking_code,
+          total_price: finalPrice,
+          booked_seats: trip.seats,
+          trip: trip.tripId,
+          user_info: passenger,
+          company: companyId,
+          booking_code: booking_code,
         };
+        let booking: any = {};
         if (req.user) {
           bookingData.user = req.user;
+          if (req.body.promo_id) {
+            const promoId = req.body.promo_id;
+            const promoCode = await PromoCodeController.getInstance().getOne({
+              query: { _id: promoId },
+            });
+            if (!promoCode)
+              return res.status(400).json({ msg: "Promo code not found" });
+            const promoRedemption = await promoRedemptionModel.findOne({
+              promo_code: new Types.ObjectId(promoCode._id as string),
+              user: req.user,
+            });
+            if (!promoRedemption) {
+              booking = (await BookingController.getInstance().create(
+                bookingData,
+              )) as unknown as IBooking;
+              await promoRedemptionModel.create({
+                promo_code: new Types.ObjectId(promoCode._id as string),
+                user: new Types.ObjectId(req.user as string),
+                booking: new Types.ObjectId(booking._id as string),
+                useCount: 1,
+              });
+            } else {
+              if (promoRedemption.useCount >= promoCode.maxUses) {
+                return res.status(400).json({ msg: "Promo code is used" });
+              }
+              bookingData.total_price =
+                promoCode.discountType === DiscountTypeEnum.PERCENTAGE
+                  ? bookingData.total_price * (1 - promoCode.value / 100)
+                  : bookingData.total_price - promoCode.value;
+              booking = (await BookingController.getInstance().create(
+                bookingData,
+              )) as unknown as IBooking;
+              await promoRedemptionModel.findOneAndUpdate(
+                { _id: promoRedemption._id },
+                { $inc: { useCount: 1 } },
+              );
+            }
+          } else {
+            booking = (await BookingController.getInstance().create(
+              bookingData,
+            )) as unknown as IBooking;
+          }
         } else {
           bookingData.accessTokenHash = sha256(token);
+          booking = (await BookingController.getInstance().create(
+            bookingData,
+          )) as unknown as IBooking;
         }
-        const booking = (await BookingController.getInstance().create(
-          bookingData,
-        )) as unknown as IBooking;
+
         await verifyPayment(
           ownerChatId as string,
           message,
