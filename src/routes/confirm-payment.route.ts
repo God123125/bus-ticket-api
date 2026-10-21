@@ -57,6 +57,21 @@ const routes: IRoute[] = [
             promo_code: new Types.ObjectId(promoCode._id as string),
             user: req.user,
           });
+          if (!promoRedemption) {
+            await promoRedemptionModel.create({
+              promo_code: new Types.ObjectId(promoCode._id as string),
+              user: new Types.ObjectId(req.user as string),
+              useCount: 1,
+            });
+          } else {
+            if (promoRedemption.useCount >= promoCode.maxUses) {
+              return res.status(400).json({ msg: "Promo code is used" });
+            }
+            await promoRedemptionModel.findOneAndUpdate(
+              { _id: promoRedemption._id },
+              { $inc: { useCount: 1 } },
+            );
+          }
         }
         const bookingData: any = {
           total_price: finalPrice,
@@ -66,56 +81,12 @@ const routes: IRoute[] = [
           company: companyId,
           booking_code: booking_code,
         };
+        if (req.user) bookingData.user = req.user;
+        else bookingData.accessTokenHash = sha256(token);
         let booking: any = {};
-        if (req.user) {
-          bookingData.user = req.user;
-          if (req.body.promo_id) {
-            const promoId = req.body.promo_id;
-            const promoCode = await PromoCodeController.getInstance().getOne({
-              query: { _id: promoId },
-            });
-            if (!promoCode)
-              return res.status(400).json({ msg: "Promo code not found" });
-            const promoRedemption = await promoRedemptionModel.findOne({
-              promo_code: new Types.ObjectId(promoCode._id as string),
-              user: req.user,
-            });
-            if (!promoRedemption) {
-              booking = (await BookingController.getInstance().create(
-                bookingData,
-              )) as unknown as IBooking;
-              await promoRedemptionModel.create({
-                promo_code: new Types.ObjectId(promoCode._id as string),
-                user: new Types.ObjectId(req.user as string),
-                useCount: 1,
-              });
-            } else {
-              if (promoRedemption.useCount >= promoCode.maxUses) {
-                return res.status(400).json({ msg: "Promo code is used" });
-              }
-              bookingData.total_price =
-                promoCode.discountType === DiscountTypeEnum.PERCENTAGE
-                  ? bookingData.total_price * (1 - promoCode.value / 100)
-                  : bookingData.total_price - promoCode.value;
-              booking = (await BookingController.getInstance().create(
-                bookingData,
-              )) as unknown as IBooking;
-              await promoRedemptionModel.findOneAndUpdate(
-                { _id: promoRedemption._id },
-                { $inc: { useCount: 1 } },
-              );
-            }
-          } else {
-            booking = (await BookingController.getInstance().create(
-              bookingData,
-            )) as unknown as IBooking;
-          }
-        } else {
-          bookingData.accessTokenHash = sha256(token);
-          booking = (await BookingController.getInstance().create(
-            bookingData,
-          )) as unknown as IBooking;
-        }
+        booking = (await BookingController.getInstance().create(
+          bookingData,
+        )) as unknown as IBooking;
 
         await verifyPayment(
           ownerChatId as string,
