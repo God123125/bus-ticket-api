@@ -25,6 +25,7 @@ const routes: IRoute[] = [
         const trip = req.body.trip;
         const payment = req.body.payment;
         let finalPrice = payment.totalAmount;
+        let redemption: any = null;
         const owner = await userModel.findOne({
           company: companyId,
           role: RoleEnum.Merchant,
@@ -45,7 +46,7 @@ const routes: IRoute[] = [
               .json({ msg: "Login required to use a promo code" });
 
           const promoCode = await PromoCodeController.getInstance().getOne({
-            query: { _id: promo_id },
+            query: { _id: promo_id, expiresAt: { $gt: new Date() } },
           });
           if (!promoCode)
             return res.status(400).json({ msg: "Promo code not found" });
@@ -53,24 +54,24 @@ const routes: IRoute[] = [
             promoCode.discountType === DiscountTypeEnum.PERCENTAGE
               ? finalPrice * (1 - promoCode.value / 100)
               : finalPrice - promoCode.value;
-          const promoRedemption = await promoRedemptionModel.findOne({
-            promo_code: new Types.ObjectId(promoCode._id as string),
-            user: req.user,
-          });
-          if (!promoRedemption) {
-            await promoRedemptionModel.create({
-              promo_code: new Types.ObjectId(promoCode._id as string),
-              user: new Types.ObjectId(req.user as string),
-              useCount: 1,
-            });
-          } else {
-            if (promoRedemption.useCount >= promoCode.maxUses) {
-              return res.status(400).json({ msg: "Promo code is used" });
-            }
-            await promoRedemptionModel.findOneAndUpdate(
-              { _id: promoRedemption._id },
+          try {
+            redemption = await promoRedemptionModel.findOneAndUpdate(
+              {
+                promo_code: new Types.ObjectId(promoCode._id as string),
+                user: new Types.ObjectId(req.user as string),
+                useCount: { $lt: promoCode.maxUses },
+              },
               { $inc: { useCount: 1 } },
+              { upsert: true, new: true, rawResult: true },
             );
+          } catch (e: any) {
+            // limit reached -> filter misses -> upsert hits the unique index
+            if (e.code === 11000) {
+              return res
+                .status(400)
+                .json({ msg: "Promo code is used", success: false });
+            }
+            responseServerError(res, e);
           }
         }
         const bookingData: any = {
