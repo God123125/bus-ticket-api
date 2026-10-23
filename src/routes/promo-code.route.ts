@@ -11,6 +11,7 @@ const routes: IRoute[] = [
     path: "/",
     method: "get",
     authentication: true,
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const pagination: IPaginationForm = {
@@ -48,6 +49,7 @@ const routes: IRoute[] = [
     path: "/",
     method: "post",
     authentication: true,
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const body = req.body;
@@ -65,6 +67,7 @@ const routes: IRoute[] = [
     path: "/:id",
     method: "patch",
     authentication: true,
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -86,6 +89,7 @@ const routes: IRoute[] = [
     path: "/:id",
     method: "delete",
     authentication: true,
+    roles: [RoleEnum.Admin],
     handler: async (req: Request, res: Response) => {
       try {
         const id = req.params.id as string;
@@ -96,6 +100,21 @@ const routes: IRoute[] = [
           msg: "Promo code deleted successfully!",
           data: data,
         });
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/:id",
+    method: "get",
+    authentication: true,
+    roles: [RoleEnum.Admin],
+    handler: async (req: Request, res: Response) => {
+      try {
+        const id = req.params.id as string;
+        const data = await PromoCodeController.getInstance().getById(id);
+        return res.status(200).json(data);
       } catch (e: any) {
         responseServerError(res, e);
       }

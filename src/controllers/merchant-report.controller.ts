@@ -80,6 +80,7 @@ export const merchantReportController = {
             },
           },
         ]);
+      const total = await BookingController.getInstance().count();
       res.json({
         list: data,
         pendingBookingCount,
@@ -88,6 +89,7 @@ export const merchantReportController = {
         refundedBookingCount,
         totalBookingCount,
         totalBookingAmount: (totalBookingAmount[0] as any)?.totalAmount,
+        total: total,
       });
     } catch (e: any) {
       responseServerError(res, e);
