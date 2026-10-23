@@ -70,24 +70,33 @@ const routes: IRoute[] = [
   {
     path: "/",
     method: "get",
+    authentication: "optional",
     handler: async (req: Request, res: Response) => {
       try {
         const query: any = {};
-        const access_token = req.header("x-booking-token");
         if (req.user) {
           query.user = req.user;
         } else {
-          query.accessTokenHash = access_token;
+          const token = req.query.access_token;
+          if (!token)
+            return res.status(400).json({
+              msg: "Access token is required!",
+            });
+          query.accessTokenHash = token;
         }
         query.booking_code = req.query.booking_code;
         const data = await BookingController.getInstance()
           .getMany({
             query,
           })
-          .populate([{ path: "user" }, { path: "trip" }]);
+          .populate([
+            { path: "user" },
+            { path: "trip" },
+            { path: "company", select: "name" },
+          ]);
         return res.status(200).json({
           msg: "Booking fetched successfully!",
-          data: data,
+          list: data,
         });
       } catch (e: any) {
         responseServerError(res, e);
