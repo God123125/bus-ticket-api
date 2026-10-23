@@ -17,7 +17,7 @@ export default class PromoCodeController extends Controller<IPromoCode> {
     const now = new Date();
 
     const pipeline: any[] = [
-      { $match: { status: "Active", expiresAt: { $gt: now } } },
+      { $match: { is_active: true, expiresAt: { $gt: now } } },
     ];
 
     if (userId) {
@@ -48,7 +48,18 @@ export default class PromoCodeController extends Controller<IPromoCode> {
             },
           },
         },
-        { $match: { $expr: { $lt: ["$usedCount", "$maxUses"] } } },
+        {
+          $match: {
+            $expr: {
+              $or: [
+                // never redeemed this promo -> always show
+                { $eq: [{ $size: "$redemptions" }, 0] },
+                // otherwise only show if still under the limit
+                { $lt: ["$usedCount", "$maxUses"] },
+              ],
+            },
+          },
+        },
         { $project: { redemptions: 0 } },
       );
     }
