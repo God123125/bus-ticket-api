@@ -2,7 +2,7 @@ import { RoleEnum } from "../interfaces/role-enum";
 import { IRoute } from "../interfaces/route";
 import { parseToExpressRoute } from "../utils/route.util";
 import FeedbackController from "../controllers/feedback.controller";
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import { responseServerError } from "../utils/log.util";
 import { IPaginationForm } from "../interfaces/pagination";
 import {
@@ -61,6 +61,29 @@ const routes: IRoute[] = [
             company,
           );
         return res.status(200).json(data);
+      } catch (e: any) {
+        responseServerError(res, e);
+      }
+    },
+  },
+  {
+    path: "/landing",
+    method: "get",
+    authentication: false,
+    handler: async (req: Request, res: Response) => {
+      try {
+        const data = await FeedbackController.getInstance()
+          .getMany({
+            query: { star: { $gte: 4 } },
+          })
+          .populate([{ path: "company", select: ["name", "image"] }])
+          .sort({ createdAt: -1 })
+          .limit(3);
+        return res.status(200).json({
+          msg: "Feedback fetched successfully!",
+          list: data,
+          total: data.length,
+        });
       } catch (e: any) {
         responseServerError(res, e);
       }
