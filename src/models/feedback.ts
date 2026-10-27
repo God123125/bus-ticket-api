@@ -2,6 +2,7 @@ import { model, ObjectId, Schema } from "mongoose";
 import { IMongoObject } from "../interfaces/mongo-object";
 
 export interface IFeedback extends IMongoObject {
+  user: ObjectId;
   company: ObjectId;
   message: string;
   star: number;
@@ -10,6 +11,7 @@ export interface IFeedback extends IMongoObject {
 }
 const schema: Schema<IFeedback> = new Schema<IFeedback>(
   {
+    user: { type: Schema.Types.ObjectId, ref: "client_users", required: true },
     company: { type: Schema.Types.ObjectId, ref: "companies", required: true },
     message: { type: Schema.Types.String, required: true },
     star: { type: Schema.Types.Number, required: true },
